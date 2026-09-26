@@ -48,6 +48,9 @@ class RemoteSessions(private val context: Context) {
         val canSeek: Boolean = false,
         val shuffle: Boolean = false,
         val repeatMode: Int = PlaybackStateCompat.REPEAT_MODE_NONE,
+        /** Whether the app accepts shuffle / repeat changes from us (Spotify and Chrome don't). */
+        val canShuffle: Boolean = false,
+        val canRepeat: Boolean = false,
     ) {
         fun positionAt(now: Long = SystemClock.elapsedRealtime()): Long {
             if (!isPlaying || positionUpdatedAt == 0L) return positionMs
@@ -178,6 +181,8 @@ class RemoteSessions(private val context: Context) {
             canSeek = (s?.actions ?: 0) and PlaybackState.ACTION_SEEK_TO != 0L,
             shuffle = (cc?.shuffleMode ?: PlaybackStateCompat.SHUFFLE_MODE_NONE) != PlaybackStateCompat.SHUFFLE_MODE_NONE,
             repeatMode = cc?.repeatMode?.takeIf { it >= 0 } ?: PlaybackStateCompat.REPEAT_MODE_NONE,
+            canShuffle = (s?.actions ?: 0) and PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE != 0L,
+            canRepeat = (s?.actions ?: 0) and PlaybackStateCompat.ACTION_SET_REPEAT_MODE != 0L,
         )
     }
 

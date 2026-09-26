@@ -179,8 +179,9 @@ fun MainPanel(
                 IconButton(actions::open, width = 34.dp, icon = Icons.Eject)
                 Spacer(Modifier.weight(1f))
                 Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                    LedToggle("SHUFFLE", state.shuffle, actions::toggleShuffle)
-                    LedToggle(if (state.repeat == Repeat.One) "REPEAT 1" else "REPEAT", state.repeat != Repeat.Off, actions::cycleRepeat)
+                    // Greyed out when the streaming app ignores shuffle / repeat requests.
+                    LedToggle("SHUFFLE", state.shuffle && state.canShuffle, actions::toggleShuffle, enabled = state.canShuffle)
+                    LedToggle(if (state.repeat == Repeat.One) "REPEAT 1" else "REPEAT", state.repeat != Repeat.Off && state.canRepeat, actions::cycleRepeat, enabled = state.canRepeat)
                     // Remote mode has no playlist: the streaming app owns the queue.
                     LedToggle("PL", playlistVisible && source == Source.Local, actions::togglePlaylist, enabled = source == Source.Local)
                 }

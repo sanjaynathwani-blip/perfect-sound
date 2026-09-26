@@ -25,6 +25,8 @@ data class DisplayState(
     val volume: Float,
     val shuffle: Boolean,
     val repeat: Repeat,
+    val canShuffle: Boolean = true,
+    val canRepeat: Boolean = true,
     val bitrateKbps: Int? = null,
     val sampleRateHz: Int? = null,
     val channels: Int? = null,
@@ -72,6 +74,8 @@ fun RemoteSessions.NowPlaying?.toDisplay(app: RemoteSessions.App, positionMs: Lo
             PlaybackStateCompat.REPEAT_MODE_ONE -> Repeat.One
             else -> Repeat.Off
         },
+        canShuffle = np?.canShuffle == true,
+        canRepeat = np?.canRepeat == true,
         channels = if (np?.title != null) 2 else null,
     )
 }
