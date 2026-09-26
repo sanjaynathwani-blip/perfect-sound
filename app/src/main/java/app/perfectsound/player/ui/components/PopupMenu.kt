@@ -55,3 +55,25 @@ fun PopupMenu(items: List<MenuItem>, offset: IntOffset, onDismiss: () -> Unit) {
         }
     }
 }
+
+/** A small read-only panel of label/value rows, e.g. keyboard shortcuts. */
+@Composable
+fun InfoPopup(title: String, rows: List<Pair<String, String>>, offset: IntOffset, onDismiss: () -> Unit) {
+    Popup(offset = offset, onDismissRequest = onDismiss, properties = PopupProperties(focusable = true)) {
+        Column(
+            Modifier
+                .background(PsColors.PanelBottom)
+                .border(1.dp, PsColors.BevelLight)
+                .clickable(remember { MutableInteractionSource() }, null, onClick = onDismiss)
+                .padding(14.dp),
+        ) {
+            BasicText(title, style = LabelStyle.copy(color = PsColors.TitleText, letterSpacing = 2.sp))
+            rows.forEach { (label, value) ->
+                androidx.compose.foundation.layout.Row(Modifier.padding(top = 6.dp)) {
+                    BasicText(label, Modifier.width(170.dp), style = LcdTextStyle.copy(fontSize = 12.sp))
+                    BasicText(value, style = LabelStyle.copy(color = PsColors.Text, fontSize = 12.sp, letterSpacing = 0.sp))
+                }
+            }
+        }
+    }
+}

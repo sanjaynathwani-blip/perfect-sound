@@ -58,6 +58,9 @@ interface MainPanelActions {
     fun toggleEqualizer()
     fun togglePlaylist()
     fun selectSource(source: Source)
+    fun seekBy(deltaMs: Long)
+    fun changeVolume(delta: Float)
+    fun addFolder()
 }
 
 /** A source button: [available] is false when the app isn't installed. */

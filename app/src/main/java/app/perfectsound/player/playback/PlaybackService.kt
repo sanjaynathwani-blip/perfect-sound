@@ -3,10 +3,14 @@ package app.perfectsound.player.playback
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
@@ -40,6 +44,11 @@ class PlaybackService : MediaSessionService() {
     private val tap = SpectrumTapProcessor()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var levelsJob: Job? = null
+    private lateinit var queueStore: QueueStore
+    private val main = Handler(Looper.getMainLooper())
+    private val saveQueue = Runnable { session?.player?.let(queueStore::save) }
+    /** Tracks that failed in a row; stops skipping once every track has failed. */
+    private var consecutiveErrors = 0
 
     override fun onCreate() {
         super.onCreate()
@@ -55,9 +64,38 @@ class PlaybackService : MediaSessionService() {
             .setHandleAudioBecomingNoisy(true)
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
-        player.addListener(object : androidx.media3.common.Player.Listener {
+        queueStore = QueueStore(this)
+        queueStore.load()?.let { saved ->
+            player.setMediaItems(saved.items, saved.index, saved.positionMs)
+            player.volume = saved.volume
+            player.shuffleModeEnabled = saved.shuffle
+            player.repeatMode = saved.repeatMode
+            if (saved.items.isNotEmpty()) player.prepare()
+        }
+        player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 if (isPlaying) startLevels() else stopLevels()
+                scheduleSave()
+            }
+
+            override fun onEvents(player: Player, events: Player.Events) {
+                if (events.containsAny(Player.EVENT_TIMELINE_CHANGED, Player.EVENT_MEDIA_ITEM_TRANSITION,
+                        Player.EVENT_POSITION_DISCONTINUITY, Player.EVENT_SHUFFLE_MODE_ENABLED_CHANGED,
+                        Player.EVENT_REPEAT_MODE_CHANGED, Player.EVENT_VOLUME_CHANGED)) scheduleSave()
+            }
+
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                if (reason != Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED) consecutiveErrors = 0
+            }
+
+            // Skip tracks that can't be played (deleted file, lost permission, unsupported format).
+            override fun onPlayerError(error: PlaybackException) {
+                consecutiveErrors++
+                if (consecutiveErrors < player.mediaItemCount && player.hasNextMediaItem()) {
+                    player.seekToNextMediaItem()
+                    player.prepare()
+                    player.play()
+                }
             }
         })
 
@@ -66,6 +104,14 @@ class PlaybackService : MediaSessionService() {
         session = MediaSession.Builder(this, player)
             .setSessionActivity(openApp)
             .setCallback(object : MediaSession.Callback {
+                // "Resume playback" from the system media controls after the app was closed.
+                override fun onPlaybackResumption(mediaSession: MediaSession, controller: MediaSession.ControllerInfo)
+                        : ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
+                    val saved = queueStore.load()
+                        ?: return Futures.immediateFailedFuture(UnsupportedOperationException("nothing to resume"))
+                    return Futures.immediateFuture(MediaSession.MediaItemsWithStartPosition(saved.items, saved.index, saved.positionMs))
+                }
+
                 // Items added by the UI carry their URI in requestMetadata; resolve it for the player.
                 override fun onAddMediaItems(mediaSession: MediaSession, controller: MediaSession.ControllerInfo,
                                              mediaItems: MutableList<MediaItem>): ListenableFuture<MutableList<MediaItem>> =
@@ -79,14 +125,23 @@ class PlaybackService : MediaSessionService() {
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
 
+    private fun scheduleSave() {
+        main.removeCallbacks(saveQueue)
+        main.postDelayed(saveQueue, 500)
+    }
+
     override fun onTaskRemoved(rootIntent: Intent?) {
+        session?.player?.let(queueStore::save)
         val player = session?.player
         if (player == null || !player.playWhenReady || player.mediaItemCount == 0) stopSelf()
     }
 
     override fun onDestroy() {
         scope.cancel()
+        main.removeCallbacks(saveQueue)
+        main.removeCallbacks(periodicSave)
         session?.run {
+            queueStore.save(player)
             player.release()
             release()
         }
@@ -99,6 +154,8 @@ class PlaybackService : MediaSessionService() {
      * bursts, so a playhead advances in real time [LATENCY_S] behind the write position.
      */
     private fun startLevels() {
+        main.removeCallbacks(periodicSave)
+        main.postDelayed(periodicSave, 5000) // keep the saved position fresh while playing
         if (levelsJob?.isActive == true) return
         levelsJob = scope.launch {
             val frame = FloatArray(FFT_SIZE)
@@ -124,7 +181,15 @@ class PlaybackService : MediaSessionService() {
         }
     }
 
+    private val periodicSave = object : Runnable {
+        override fun run() {
+            session?.player?.let(queueStore::save)
+            main.postDelayed(this, 5000)
+        }
+    }
+
     private fun stopLevels() {
+        main.removeCallbacks(periodicSave)
         levelsJob?.cancel()
         levelsJob = null
         if (AudioLevels.state.value.source == AudioLevels.Source.Local) AudioLevels.clear()

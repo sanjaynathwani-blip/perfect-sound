@@ -2,12 +2,14 @@ package app.perfectsound.player
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
+import android.view.DragEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -17,7 +19,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -36,9 +37,11 @@ import app.perfectsound.player.ui.PlaylistPanel
 import app.perfectsound.player.ui.RemotePanel
 import app.perfectsound.player.ui.Source
 import app.perfectsound.player.ui.SourceOption
+import app.perfectsound.player.ui.UiPrefs
 import app.perfectsound.player.ui.toDisplay
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -46,8 +49,9 @@ class MainActivity : ComponentActivity() {
     private lateinit var player: PlayerConnection
     private lateinit var remote: RemoteSessions
     private lateinit var importer: TrackImporter
-    private val eq = MutableStateFlow(EqSettings())
-    private val source = MutableStateFlow<Source>(Source.Local)
+    private lateinit var prefs: UiPrefs
+    private lateinit var eq: MutableStateFlow<EqSettings>
+    private lateinit var source: MutableStateFlow<Source>
     /** Eject/open replaces the playlist and plays; ADD appends. */
     private var replaceOnImport = false
 
@@ -69,7 +73,11 @@ class MainActivity : ComponentActivity() {
         player = PlayerConnection(applicationContext, lifecycleScope)
         remote = RemoteSessions(applicationContext)
         importer = TrackImporter(applicationContext)
+        prefs = UiPrefs(applicationContext)
+        eq = MutableStateFlow(prefs.eq)
+        source = MutableStateFlow(prefs.source)
         player.connect()
+        handleOpenIntent(intent)
 
         setContent {
             val local by player.state.collectAsStateWithLifecycle()
@@ -77,8 +85,8 @@ class MainActivity : ComponentActivity() {
             val levels by AudioLevels.state.collectAsStateWithLifecycle()
             val eqSettings by eq.collectAsStateWithLifecycle()
             val currentSource by source.collectAsStateWithLifecycle()
-            var equalizerVisible by rememberSaveable { mutableStateOf(true) }
-            var playlistVisible by rememberSaveable { mutableStateOf(true) }
+            var equalizerVisible by remember { mutableStateOf(prefs.equalizerVisible) }
+            var playlistVisible by remember { mutableStateOf(prefs.playlistVisible) }
             val capturing = levels.source == AudioLevels.Source.Capture
 
             // Remote apps report position occasionally; extrapolate it and read the system volume.
@@ -111,7 +119,7 @@ class MainActivity : ComponentActivity() {
                 sources = sources,
                 levels = levels,
                 eq = eqSettings,
-                onEqChange = { eq.value = it },
+                onEqChange = { eq.value = it; prefs.eq = it },
                 equalizerVisible = equalizerVisible,
                 playlistVisible = playlistVisible,
                 capturing = capturing,
@@ -130,9 +138,15 @@ class MainActivity : ComponentActivity() {
                     }
                     override fun toggleShuffle() = route({ player.toggleShuffle() }) { remote.toggleShuffle(it) }
                     override fun cycleRepeat() = route({ player.cycleRepeat() }) { remote.cycleRepeat(it) }
-                    override fun toggleEqualizer() { equalizerVisible = !equalizerVisible }
-                    override fun togglePlaylist() { playlistVisible = !playlistVisible }
-                    override fun selectSource(source: Source) { this@MainActivity.source.value = source }
+                    override fun toggleEqualizer() { equalizerVisible = !equalizerVisible; prefs.equalizerVisible = equalizerVisible }
+                    override fun togglePlaylist() { playlistVisible = !playlistVisible; prefs.playlistVisible = playlistVisible }
+                    override fun selectSource(source: Source) { this@MainActivity.source.value = source; prefs.source = source }
+                    override fun seekBy(deltaMs: Long) = route({ player.seekBy(deltaMs) }) { app ->
+                        val np = remote.state.value.nowPlaying[app]
+                        if (np?.canSeek == true) remote.seekTo(app, (np.positionAt() + deltaMs).coerceAtLeast(0))
+                    }
+                    override fun changeVolume(delta: Float) = setVolume(display.volume + delta)
+                    override fun addFolder() = pickFolder.launch(null)
                 },
                 rightPanel = { modifier ->
                     when (val s = currentSource) {
@@ -148,7 +162,29 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 },
+                onDrop = ::onFilesDropped,
             )
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleOpenIntent(intent)
+    }
+
+    /** "Open with Perfect Sound": add the file to the playlist and play it. */
+    private fun handleOpenIntent(intent: Intent?) {
+        if (intent?.action != Intent.ACTION_VIEW) return
+        val uri = intent.data ?: return
+        intent.action = null // don't re-import on configuration changes
+        lifecycleScope.launch {
+            val items = importer.fromDocuments(listOf(uri))
+            if (items.isEmpty()) return@launch
+            player.state.first { it.connected } // on a cold start the player may still be connecting
+            source.value = Source.Local
+            val first = player.state.value.playlist.size
+            player.addTracks(items)
+            player.playAt(first)
         }
     }
 
@@ -173,6 +209,17 @@ class MainActivity : ComponentActivity() {
         override fun addFolder() = pickFolder.launch(null)
         override fun remove(indices: Set<Int>) { player.removeTracks(indices) }
         override fun clear() { player.clear() }
+        override fun move(from: Int, to: Int) { player.moveTrack(from, to) }
+    }
+
+    /** Files dragged in from the Files app (or another window) are added to the playlist. */
+    private fun onFilesDropped(event: DragEvent): Boolean {
+        val clip = event.clipData ?: return false
+        requestDragAndDropPermissions(event) // read access to the dropped URIs
+        val uris = (0 until clip.itemCount).mapNotNull { clip.getItemAt(it).uri }
+        if (uris.isEmpty()) return false
+        lifecycleScope.launch { addItems(importer.fromDropped(uris)) }
+        return true
     }
 
     /** Sends a command to the built-in player or to the streaming app being remote-controlled. */

@@ -22,6 +22,15 @@ class TrackImporter(private val context: Context) {
         }
     }
 
+    /** Dropped items may be anything; keep the audio files. Access lasts only while the app runs. */
+    suspend fun fromDropped(uris: List<Uri>): List<MediaItem> = withContext(Dispatchers.IO) {
+        uris.filter { uri ->
+            val type = context.contentResolver.getType(uri).orEmpty()
+            type.startsWith("audio/") || type == "application/ogg" ||
+                displayName(uri)?.substringAfterLast('.', "")?.lowercase() in AUDIO_EXTENSIONS
+        }.mapNotNull { runCatching { toMediaItem(it) }.getOrNull() }
+    }
+
     /** All audio files in a picked folder and its subfolders, sorted by path. */
     suspend fun fromTree(treeUri: Uri): List<MediaItem> = withContext(Dispatchers.IO) {
         keepAccess(treeUri)

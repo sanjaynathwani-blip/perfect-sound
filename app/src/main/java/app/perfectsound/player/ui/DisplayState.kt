@@ -33,7 +33,7 @@ data class DisplayState(
 fun PlayerConnection.State.toDisplay(): DisplayState {
     val track = currentTrack
     return DisplayState(
-        title = track?.let { "${currentIndex + 1}. ${it.displayName} (${formatTime(it.durationMs)})" } ?: "Perfect Sound",
+        title = error ?: track?.let { "${currentIndex + 1}. ${it.displayName} (${formatTime(it.durationMs)})" } ?: "Perfect Sound",
         hasTrack = track != null,
         positionMs = positionMs,
         durationMs = durationMs,

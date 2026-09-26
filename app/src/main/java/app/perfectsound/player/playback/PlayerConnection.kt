@@ -40,6 +40,8 @@ class PlayerConnection(private val context: Context, private val scope: Coroutin
         val bitrateKbps: Int? = null,
         val sampleRateHz: Int? = null,
         val channels: Int? = null,
+        /** Shown briefly when a track can't be played (it is skipped). */
+        val error: String? = null,
     ) {
         val currentTrack: Track? get() = playlist.getOrNull(currentIndex)
         val totalDurationMs: Long get() = playlist.sumOf { it.durationMs.coerceAtLeast(0) }
@@ -51,9 +53,19 @@ class PlayerConnection(private val context: Context, private val scope: Coroutin
     private var controller: MediaController? = null
     private var ticker: Job? = null
     private var stopped = true
+    private var error: String? = null
 
     private val listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) = refresh()
+
+        override fun onPlayerError(e: androidx.media3.common.PlaybackException) {
+            val title = controller?.currentMediaItem?.mediaMetadata?.title ?: "track"
+            error = "Can't play $title"
+        }
+
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            if (reason != Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED) error = null
+        }
     }
 
     fun connect() {
@@ -104,6 +116,8 @@ class PlayerConnection(private val context: Context, private val scope: Coroutin
     fun next() = controller?.seekToNextMediaItem()
     fun previous() = controller?.seekToPreviousMediaItem()
     fun seekTo(positionMs: Long) = controller?.seekTo(positionMs)
+    fun seekBy(deltaMs: Long) = controller?.run { seekTo((currentPosition + deltaMs).coerceAtLeast(0)) }
+    fun moveTrack(from: Int, to: Int) = controller?.moveMediaItem(from, to)
     fun setVolume(volume: Float) = controller?.run { this.volume = volume.coerceIn(0f, 1f) }
     fun toggleShuffle() = controller?.run { shuffleModeEnabled = !shuffleModeEnabled }
 
@@ -161,6 +175,7 @@ class PlayerConnection(private val context: Context, private val scope: Coroutin
             },
             sampleRateHz = format?.sampleRate?.takeIf { it > 0 },
             channels = format?.channelCount?.takeIf { it > 0 },
+            error = error,
         )
     }
 
