@@ -8,22 +8,30 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
@@ -51,7 +59,7 @@ data class PanelMessage(val title: String, val body: String, val button: String?
 /** A button under the album art. */
 data class PanelButton(val label: String, val on: Boolean = false, val onClick: () -> Unit)
 
-/** Room under the art for up to two rows of buttons. */
+/** Room under the art for its buttons until they have been measured. */
 private val ButtonsHeight = 56.dp
 
 /**
@@ -82,12 +90,18 @@ fun NowPlayingPanel(
     Column(modifier.background(PsColors.Panel)) {
         TitleStrip(label)
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(10.dp)) {
+            val density = LocalDensity.current
+            var buttonsHeight by remember { mutableStateOf(ButtonsHeight) }
             // The art takes the height left over by its buttons, but leaves most of the width to the EQ.
-            val artSize = minOf(maxHeight - ButtonsHeight, maxWidth * 0.4f, 320.dp).coerceAtLeast(56.dp)
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            val artSize = minOf(maxHeight - buttonsHeight - 8.dp, maxWidth * 0.4f, 320.dp).coerceAtLeast(56.dp)
+            // The row is as tall as the art and its buttons, so the visualizer ends level with them.
+            Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(Modifier.width(artSize), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     AlbumArt(info.art, Modifier.size(artSize))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    FlowRow(
+                        Modifier.onSizeChanged { buttonsHeight = with(density) { it.height.toDp() } },
+                        horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
                         buttons.forEach { LedToggle(it.label, it.on, it.onClick) }
                     }
                 }
