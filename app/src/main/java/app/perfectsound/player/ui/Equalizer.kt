@@ -15,6 +15,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -62,10 +66,13 @@ fun EqSection(
     onToggle: (() -> Unit)? = null,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            BasicText(visMode.label, style = LabelStyle.copy(letterSpacing = 2.sp))
+        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            BasicText(visMode.label, Modifier.height(20.dp).wrapContentHeight(), style = LabelStyle.copy(letterSpacing = 2.sp))
             Spacer(Modifier.weight(1f))
-            LedToggle("MODE", false, { onVisModeChange(visMode.next()) })
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                LedToggle("MODE", false, { onVisModeChange(visMode.next()) }, led = false)
+                ModeDots(visMode, Modifier.padding(top = 4.dp))
+            }
             // Local files bounce without a switch; in remote mode ON starts the audio capture.
             if (onToggle != null) LedToggle("ON", on, onToggle)
             if (EQ_TUNING_ENABLED) {
@@ -109,6 +116,16 @@ fun EqSection(
                     }
                 }
             }
+        }
+    }
+}
+
+/** One tiny dot per visualizer mode, the current one lit, so it's clear where MODE is in the cycle. */
+@Composable
+private fun ModeDots(current: VisMode, modifier: Modifier = Modifier) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        VisMode.entries.forEach {
+            Box(Modifier.size(3.dp).background(if (it == current) PsColors.Lcd else PsColors.TextDim.copy(alpha = 0.35f), CircleShape))
         }
     }
 }

@@ -95,7 +95,7 @@ fun IconButton(
 
 /** Small text button with an LED that lights when [on]. */
 @Composable
-fun LedToggle(label: String, on: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
+fun LedToggle(label: String, on: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, led: Boolean = true) {
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
     Row(
@@ -109,7 +109,7 @@ fun LedToggle(label: String, on: Boolean, onClick: () -> Unit, modifier: Modifie
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(5.dp),
     ) {
-        Box(Modifier.size(6.dp).background(if (on) PsColors.Lcd else PsColors.LcdDim, CircleShape))
+        if (led) Box(Modifier.size(6.dp).background(if (on) PsColors.Lcd else PsColors.LcdDim, CircleShape))
         BasicText(label, style = LabelStyle.copy(color = if (enabled) PsColors.Text else PsColors.TextDim))
     }
 }
