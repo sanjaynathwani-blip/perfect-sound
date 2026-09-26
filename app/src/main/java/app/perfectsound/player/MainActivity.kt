@@ -95,6 +95,7 @@ class MainActivity : ComponentActivity() {
             val currentSource by source.collectAsStateWithLifecycle()
             var equalizerVisible by remember { mutableStateOf(prefs.equalizerVisible) }
             var playlistVisible by remember { mutableStateOf(prefs.playlistVisible) }
+            var visMode by remember { mutableStateOf(prefs.visMode) }
             val capturing = levels.source == AudioLevels.Source.Capture
 
             // Remote apps report position occasionally; extrapolate it and read the system volume.
@@ -167,6 +168,8 @@ class MainActivity : ComponentActivity() {
                         eq = eqSettings,
                         onEqChange = { eq.value = it; prefs.eq = it },
                         levels = levels,
+                        visMode = visMode,
+                        onVisModeChange = { visMode = it; prefs.visMode = it },
                         modifier = modifier,
                         eqOn = if (panel.onEqToggle != null) panel.eqOn else eqSettings.enabled,
                         onEqToggle = panel.onEqToggle,

@@ -103,8 +103,10 @@ class PlaybackCaptureService : Service() {
                     sumSquares += s * s
                 }
                 val rmsDb = 20f * log10(max(sqrt(sumSquares / read).toFloat(), 1e-5f))
-                val bands = analyzer.analyze(frame) ?: continue
-                AudioLevels.publish(AudioLevels.Snapshot(AudioLevels.Source.Capture, bands, rmsDb))
+                val analysis = analyzer.analyze(frame) ?: continue
+                val bands = analysis.bands
+                AudioLevels.publish(AudioLevels.Snapshot(AudioLevels.Source.Capture, bands, rmsDb,
+                    analysis.bars, SpectrumAnalyzer.scopeTrace(frame)))
 
                 val now = System.currentTimeMillis()
                 if (now - lastLog > 1000) {

@@ -150,7 +150,7 @@ class PlaybackService : MediaSessionService() {
     }
 
     /**
-     * Publishes band levels ~60 times a second. The decoder writes audio ahead of the speaker in
+     * Publishes levels and the waveform ~60 times a second. The decoder writes audio ahead of the speaker in
      * bursts, so a playhead advances in real time [LATENCY_S] behind the write position.
      */
     private fun startLevels() {
@@ -175,7 +175,10 @@ class PlaybackService : MediaSessionService() {
                 var sumSquares = 0.0
                 for (s in frame) sumSquares += s * s
                 val rmsDb = 20f * log10(maxOf(sqrt(sumSquares / frame.size).toFloat(), 1e-5f))
-                analyzer.analyze(frame)?.let { AudioLevels.publish(AudioLevels.Snapshot(AudioLevels.Source.Local, it, rmsDb)) }
+                analyzer.analyze(frame)?.let {
+                    AudioLevels.publish(AudioLevels.Snapshot(AudioLevels.Source.Local, it.bands, rmsDb,
+                        it.bars, SpectrumAnalyzer.scopeTrace(frame)))
+                }
                 delay(16)
             }
         }

@@ -55,7 +55,7 @@ data class PanelButton(val label: String, val on: Boolean = false, val onClick: 
 private val ButtonsHeight = 56.dp
 
 /**
- * Album art with its buttons below, and to its right the track details above the equalizer.
+ * Album art with its buttons below, and to its right the track details above the visualizer.
  * Used for every source: local files and the streaming apps in remote mode.
  */
 @OptIn(ExperimentalLayoutApi::class)
@@ -70,6 +70,8 @@ fun NowPlayingPanel(
     eq: EqSettings,
     onEqChange: (EqSettings) -> Unit,
     levels: AudioLevels.Snapshot,
+    visMode: VisMode,
+    onVisModeChange: (VisMode) -> Unit,
     modifier: Modifier = Modifier,
     /** In remote mode: whether audio is being captured for the levels, and how to toggle it. */
     eqOn: Boolean = eq.enabled,
@@ -89,7 +91,7 @@ fun NowPlayingPanel(
                 }
                 Column(Modifier.weight(1f).fillMaxHeight()) {
                     if (message != null) Message(message) else TrackDetails(info, hint)
-                    if (equalizerVisible) EqSection(eq, onEqChange, levels, Modifier.padding(top = 10.dp).weight(1f).fillMaxWidth(), eqOn, onEqToggle)
+                    if (equalizerVisible) EqSection(eq, onEqChange, levels, visMode, onVisModeChange, Modifier.padding(top = 10.dp).weight(1f).fillMaxWidth(), eqOn, onEqToggle)
                 }
             }
         }

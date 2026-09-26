@@ -6,7 +6,7 @@ import app.perfectsound.player.remote.RemoteSessions
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Remembers window-level choices between launches: source, visible panels and EQ sliders. */
+/** Remembers window-level choices between launches: source, visible panels, visualizer mode and EQ sliders. */
 class UiPrefs(context: Context) {
     private val prefs = context.getSharedPreferences("ui", Context.MODE_PRIVATE)
 
@@ -23,6 +23,10 @@ class UiPrefs(context: Context) {
     var playlistVisible: Boolean
         get() = prefs.getBoolean("playlistVisible", true)
         set(value) = prefs.edit().putBoolean("playlistVisible", value).apply()
+
+    var visMode: VisMode
+        get() = prefs.getString("visMode", null)?.let { name -> VisMode.entries.firstOrNull { it.name == name } } ?: VisMode.Bands
+        set(value) = prefs.edit().putString("visMode", value.name).apply()
 
     var eq: EqSettings
         get() = runCatching {

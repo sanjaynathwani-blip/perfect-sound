@@ -1,14 +1,17 @@
 package app.perfectsound.player.audio
 
 import kotlin.math.PI
+import kotlin.math.ceil
 import kotlin.math.cos
+import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.math.max
 import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
- * Turns mono PCM frames into levels for the ten classic equalizer bands.
+ * Turns mono PCM frames into levels for the ten classic equalizer bands, plus [BAR_COUNT] finer
+ * log-spaced bars for the spectrum visualizers.
  *
  * Levels are normalised to 0..1 over a [floorDb]..0 dBFS range, so they can be drawn directly.
  */
@@ -37,8 +40,19 @@ class SpectrumAnalyzer(
         }
     }
 
-    /** Returns one level per band in [BAND_CENTERS_HZ], or null until [samples] has [fftSize] frames. */
-    fun analyze(samples: FloatArray): FloatArray? {
+    // Log-spaced bars from BAR_LOW_HZ to BAR_HIGH_HZ, as fractional FFT bins. Bars narrower than a bin
+    // (the low end) read the magnitude interpolated at their centre instead of a max over a range.
+    private val barEdges: FloatArray = FloatArray(BAR_COUNT + 1) { i ->
+        val hz = BAR_LOW_HZ * Math.pow((BAR_HIGH_HZ / BAR_LOW_HZ).toDouble(), i.toDouble() / BAR_COUNT).toFloat()
+        minOf(hz, sampleRate / 2f) * fftSize / sampleRate
+    }
+    private val magnitudes = FloatArray(fftSize / 2 + 1)
+
+    /** Levels from one FFT: [bands] matches [BAND_CENTERS_HZ], [bars] has [BAR_COUNT] entries. */
+    class Analysis(val bands: FloatArray, val bars: FloatArray)
+
+    /** Analyses the last [fftSize] frames of [samples], or returns null until it has that many. */
+    fun analyze(samples: FloatArray): Analysis? {
         if (samples.size < fftSize) return null
         val offset = samples.size - fftSize
         for (i in 0 until fftSize) {
@@ -47,17 +61,36 @@ class SpectrumAnalyzer(
         }
         fft(re, im)
 
-        // A full-scale sine through a Hann window peaks at fftSize / 4.
-        val reference = fftSize / 4f
-        return FloatArray(binRanges.size) { band ->
+        for (bin in magnitudes.indices) magnitudes[bin] = sqrt(re[bin] * re[bin] + im[bin] * im[bin])
+
+        val bands = FloatArray(binRanges.size) { band ->
             var peak = 0f
-            for (bin in binRanges[band]) {
-                val magnitude = sqrt(re[bin] * re[bin] + im[bin] * im[bin])
-                if (magnitude > peak) peak = magnitude
-            }
-            val db = 20f * log10(max(peak / reference, 1e-9f))
-            ((db - floorDb) / -floorDb).coerceIn(0f, 1f)
+            for (bin in binRanges[band]) peak = max(peak, magnitudes[bin])
+            level(peak)
         }
+        val bars = FloatArray(BAR_COUNT) { bar ->
+            val low = barEdges[bar]
+            val high = barEdges[bar + 1]
+            val first = ceil(low).toInt()
+            val last = minOf(floor(high).toInt(), magnitudes.lastIndex)
+            if (last >= first) {
+                var peak = 0f
+                for (bin in first..last) peak = max(peak, magnitudes[bin])
+                level(peak)
+            } else {
+                val center = (low + high) / 2
+                val i = center.toInt().coerceAtMost(magnitudes.lastIndex - 1)
+                val t = center - i
+                level(magnitudes[i] * (1 - t) + magnitudes[i + 1] * t)
+            }
+        }
+        return Analysis(bands, bars)
+    }
+
+    /** Maps an FFT magnitude to 0..1. A full-scale sine through a Hann window peaks at fftSize / 4. */
+    private fun level(magnitude: Float): Float {
+        val db = 20f * log10(max(magnitude / (fftSize / 4f), 1e-9f))
+        return ((db - floorDb) / -floorDb).coerceIn(0f, 1f)
     }
 
     private fun fft(re: FloatArray, im: FloatArray) {
@@ -107,5 +140,29 @@ class SpectrumAnalyzer(
         /** The ten classic equalizer bands. */
         val BAND_CENTERS_HZ = floatArrayOf(60f, 170f, 310f, 600f, 1000f, 3000f, 6000f, 12000f, 14000f, 16000f)
         val BAND_LABELS = listOf("60", "170", "310", "600", "1K", "3K", "6K", "12K", "14K", "16K")
+
+        /** Bars for the fine spectrum and waterfall visualizers. */
+        const val BAR_COUNT = 64
+        private const val BAR_LOW_HZ = 40f
+        private const val BAR_HIGH_HZ = 16_000f
+
+        /**
+         * A steady oscilloscope trace: [span] samples starting at a rising zero crossing near the end
+         * of [frame] (so a held note doesn't jitter), averaged down to [points] values.
+         */
+        fun scopeTrace(frame: FloatArray, span: Int = 1024, points: Int = 512): FloatArray {
+            if (frame.size < span) return FloatArray(points)
+            val latest = frame.size - span
+            var start = latest
+            for (i in latest downTo maxOf(1, frame.size - 2 * span)) {
+                if (frame[i - 1] < 0f && frame[i] >= 0f) { start = i; break }
+            }
+            val step = span / points
+            return FloatArray(points) { p ->
+                var sum = 0f
+                for (k in 0 until step) sum += frame[start + p * step + k]
+                sum / step
+            }
+        }
     }
 }

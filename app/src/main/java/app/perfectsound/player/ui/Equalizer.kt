@@ -2,6 +2,8 @@ package app.perfectsound.player.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,8 +17,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,7 +45,8 @@ data class EqSettings(
 )
 
 /**
- * Preamp and ten band sliders, with live levels bouncing behind them. Sits inside the now-playing panel.
+ * The visualizer, in whichever [visMode] is chosen (click it or MODE to switch), plus the preamp and
+ * ten band sliders over the BANDS view when tuning is enabled. Sits inside the now-playing panel.
  * [onToggle] overrides what ON does: in remote mode it starts capturing audio so the levels bounce,
  * since Android doesn't let us process another app's sound.
  */
@@ -50,14 +55,17 @@ fun EqSection(
     settings: EqSettings,
     onSettingsChange: (EqSettings) -> Unit,
     levels: AudioLevels.Snapshot,
+    visMode: VisMode,
+    onVisModeChange: (VisMode) -> Unit,
     modifier: Modifier = Modifier,
     on: Boolean = settings.enabled,
     onToggle: (() -> Unit)? = null,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            BasicText("EQUALIZER", style = LabelStyle.copy(letterSpacing = 2.sp))
+            BasicText(visMode.label, style = LabelStyle.copy(letterSpacing = 2.sp))
             Spacer(Modifier.weight(1f))
+            LedToggle("MODE", false, { onVisModeChange(visMode.next()) })
             // Local files bounce without a switch; in remote mode ON starts the audio capture.
             if (onToggle != null) LedToggle("ON", on, onToggle)
             if (EQ_TUNING_ENABLED) {
@@ -73,17 +81,19 @@ fun EqSection(
                 BasicText("PRE", style = LabelStyle)
             }
             if (EQ_TUNING_ENABLED) Spacer(Modifier.width(6.dp))
-            // Bands, with live levels bouncing behind the sliders
+            // The visualizer, with the band sliders over it
             Column(Modifier.weight(1f).fillMaxHeight()) {
                 Box(
                     Modifier
                         .weight(1f)
                         .fillMaxWidth()
                         .background(PsColors.LcdBackground, RoundedCornerShape(3.dp))
-                        .border(1.dp, PsColors.BevelDark, RoundedCornerShape(3.dp)),
+                        .border(1.dp, PsColors.BevelDark, RoundedCornerShape(3.dp))
+                        .clip(RoundedCornerShape(3.dp))
+                        .clickable(remember { MutableInteractionSource() }, indication = null) { onVisModeChange(visMode.next()) },
                 ) {
-                    EqLevelBars(levels.bands, Modifier.fillMaxSize().padding(horizontal = 4.dp, vertical = 3.dp))
-                    if (EQ_TUNING_ENABLED) Row(Modifier.fillMaxSize()) {
+                    Visualizer(visMode, levels, Modifier.fillMaxSize().padding(horizontal = 4.dp, vertical = 3.dp))
+                    if (EQ_TUNING_ENABLED && visMode == VisMode.Bands) Row(Modifier.fillMaxSize()) {
                         settings.bands.forEachIndexed { i, v ->
                             VSlider(v, { nv ->
                                 onSettingsChange(settings.copy(bands = settings.bands.toMutableList().also { it[i] = nv }))
@@ -91,7 +101,7 @@ fun EqSection(
                         }
                     }
                 }
-                Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
+                if (visMode == VisMode.Bands) Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
                     SpectrumAnalyzer.BAND_LABELS.forEach {
                         BasicText(it, Modifier.weight(1f), style = LabelStyle.copy(textAlign = TextAlign.Center, fontSize = 9.sp, letterSpacing = 0.sp))
                     }
