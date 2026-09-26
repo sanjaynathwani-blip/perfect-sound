@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /** Live band levels shared between whatever produces audio and the equalizer UI. */
 object AudioLevels {
-    enum class Source { None, Capture }
+    enum class Source { None, Local, Capture }
 
     data class Snapshot(
         val source: Source = Source.None,

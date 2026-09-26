@@ -13,7 +13,7 @@ import kotlin.math.sqrt
  * Levels are normalised to 0..1 over a [floorDb]..0 dBFS range, so they can be drawn directly.
  */
 class SpectrumAnalyzer(
-    private val sampleRate: Int,
+    val sampleRate: Int,
     private val fftSize: Int = 2048,
     private val floorDb: Float = -60f,
 ) {
