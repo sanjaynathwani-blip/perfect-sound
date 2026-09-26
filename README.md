@@ -8,6 +8,12 @@ Everything is drawn as vector graphics in a single window: a seven-segment time 
 scrolling title, an equalizer panel and a playlist. It stays crisp at any size and the layout adapts
 when you resize the window.
 
+## Download
+
+Get the latest APK from the [Releases page](https://github.com/sanjaynathwani-blip/perfect-sound/releases/latest)
+and open it on your device (Android 10 or later). Android will ask you to allow installing apps from
+your browser or Files app the first time.
+
 ## Features
 
 - **Local playback**: play your own files, gapless, with a background media notification,
@@ -50,6 +56,7 @@ Requires JDK 17+ and the Android SDK (platform 35).
 
 ```sh
 ./gradlew assembleDebug          # app/build/outputs/apk/debug/app-debug.apk
+./gradlew assembleRelease        # signed only if ~/.config/perfect-sound/keystore.properties exists
 ./gradlew testDebugUnitTest      # unit tests
 ```
 
