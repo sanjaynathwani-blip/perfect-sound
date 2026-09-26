@@ -16,6 +16,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -47,25 +48,22 @@ enum class VisMode(val label: String) {
     fun next(): VisMode = entries[(ordinal + 1) % entries.size]
 }
 
-/** Draws the live [levels] in the chosen [mode]. Everything is vector drawn, so it stays sharp at any size. */
+/** Draws the live [levels] in the chosen [mode] and [theme]. Everything is vector drawn, so it stays sharp at any size. */
 @Composable
-fun Visualizer(mode: VisMode, levels: AudioLevels.Snapshot, modifier: Modifier = Modifier) {
+fun Visualizer(mode: VisMode, levels: AudioLevels.Snapshot, modifier: Modifier = Modifier, theme: VisTheme = VisTheme.Green) {
     when (mode) {
-        VisMode.Bands -> EqLevelBars(levels.bands, modifier)
-        VisMode.Spectrum -> EqLevelBars(levels.bars, modifier)
-        VisMode.Leds -> LedBars(levels.bars, modifier)
-        VisMode.Curve -> SpectrumCurve(levels.bars, modifier)
-        VisMode.Scope -> Oscilloscope(levels.wave, modifier)
-        VisMode.Vu -> VuMeters(levels.channelDb, modifier)
+        VisMode.Bands -> EqLevelBars(levels.bands, modifier, theme)
+        VisMode.Spectrum -> EqLevelBars(levels.bars, modifier, theme)
+        VisMode.Leds -> LedBars(levels.bars, modifier, theme)
+        VisMode.Curve -> SpectrumCurve(levels.bars, modifier, theme)
+        VisMode.Scope -> Oscilloscope(levels.wave, modifier, theme)
+        VisMode.Vu -> VuMeters(levels.channelDb, modifier, theme)
     }
 }
 
-private val Yellow = Color(0xFFE8F54A)
-private val Red = Color(0xFFFF4A3A)
-
-/** Hi-fi style columns of separate blocks: green, then yellow, then red at the top, with a held peak block. */
+/** Hi-fi style columns of separate blocks, brighter towards the top, with a held peak block. */
 @Composable
-private fun LedBars(bars: FloatArray, modifier: Modifier) {
+private fun LedBars(bars: FloatArray, modifier: Modifier, theme: VisTheme) {
     // 64 bars are too thin for blocks; group them into 16 columns.
     val columns = remember(bars) {
         val group = (bars.size / LedColumns).coerceAtLeast(1)
@@ -86,11 +84,7 @@ private fun LedBars(bars: FloatArray, modifier: Modifier) {
             val peak = (falling.peaks[c] * segments).toInt().coerceAtMost(segments - 1)
             for (s in 0 until segments) {
                 val fraction = s / (segments - 1f)
-                val color = when {
-                    fraction >= 0.85f -> Red
-                    fraction >= 0.6f -> Yellow
-                    else -> PsColors.Lcd
-                }
+                val color = theme.led((c + 0.5f) / n, fraction)
                 val on = s < lit || (s == peak && falling.peaks[c] > 0.02f)
                 val y = size.height - (s + 1) * segH - s * segGap
                 drawRoundRect(if (on) color else color.copy(alpha = 0.08f), Offset(x, y), Size(colW, segH), radius)
@@ -103,7 +97,7 @@ private const val LedColumns = 16
 
 /** A smooth glowing line over the spectrum with a fading fill underneath. */
 @Composable
-private fun SpectrumCurve(bars: FloatArray, modifier: Modifier) {
+private fun SpectrumCurve(bars: FloatArray, modifier: Modifier, theme: VisTheme) {
     val falling = rememberFallingLevels(bars, fallPerSecond = 1.0f)
     val line = remember { Path() }
     val fill = remember { Path() }
@@ -127,18 +121,18 @@ private fun SpectrumCurve(bars: FloatArray, modifier: Modifier) {
         fill.lineTo(0f, size.height)
         fill.close()
 
-        drawPath(fill, Brush.verticalGradient(listOf(PsColors.Lcd.copy(alpha = 0.45f), PsColors.Lcd.copy(alpha = 0.03f))))
-        drawPath(line, PsColors.Lcd.copy(alpha = 0.2f), style = Stroke(6.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
-        drawPath(line, Yellow, style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+        drawPath(fill, theme.fillBrush(size.width, size.height))
+        drawPath(line, theme.traceBrush(size.width, alpha = 0.2f), style = Stroke(6.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+        drawPath(line, theme.curveBrush(size.width), style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
     }
 }
 
 @Composable
-private fun Oscilloscope(wave: FloatArray, modifier: Modifier) {
+private fun Oscilloscope(wave: FloatArray, modifier: Modifier, theme: VisTheme) {
     val path = remember { Path() }
     Canvas(modifier) {
         val mid = size.height / 2
-        drawLine(PsColors.LcdDim, Offset(0f, mid), Offset(size.width, mid), strokeWidth = 1f)
+        drawLine(lerp(theme.track, Color.White, 0.08f), Offset(0f, mid), Offset(size.width, mid), strokeWidth = 1f)
         path.reset()
         if (wave.isEmpty()) {
             path.moveTo(0f, mid)
@@ -151,8 +145,8 @@ private fun Oscilloscope(wave: FloatArray, modifier: Modifier) {
             }
         }
         // A soft glow under a crisp trace, like a phosphor screen.
-        drawPath(path, PsColors.Lcd.copy(alpha = 0.18f), style = Stroke(5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
-        drawPath(path, PsColors.Lcd, style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+        drawPath(path, theme.traceBrush(size.width, alpha = 0.18f), style = Stroke(5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+        drawPath(path, theme.traceBrush(size.width), style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
     }
 }
 
@@ -160,7 +154,7 @@ private const val ScopeGain = 1.4f
 
 /** A pair of analog VU meters, left and right, with needles that swing smoothly like the real thing. */
 @Composable
-private fun VuMeters(channelDb: FloatArray, modifier: Modifier) {
+private fun VuMeters(channelDb: FloatArray, modifier: Modifier, theme: VisTheme) {
     val target by rememberUpdatedState(channelDb)
     var needles by remember { mutableStateOf(floatArrayOf(0f, 0f)) }
     LaunchedEffect(Unit) {
@@ -184,7 +178,7 @@ private fun VuMeters(channelDb: FloatArray, modifier: Modifier) {
         val h = w / VuAspect
         val x0 = (size.width - 2 * w - gap) / 2
         val y0 = (size.height - h) / 2
-        for (i in 0..1) drawVuMeter(Offset(x0 + i * (w + gap), y0), Size(w, h), needles[i], if (i == 0) "L" else "R", text)
+        for (i in 0..1) drawVuMeter(Offset(x0 + i * (w + gap), y0), Size(w, h), needles[i], if (i == 0) "L" else "R", text, theme)
     }
 }
 
@@ -208,7 +202,7 @@ private val VuLabels = setOf(-20, -10, -5, -3, 0, 3)
  * One meter face. As on a real VU meter, the needle's pivot sits below the face under a dark cover,
  * so the scale is a shallow arc across the top and the whole box is used. Sizes scale with the box.
  */
-private fun DrawScope.drawVuMeter(topLeft: Offset, size: Size, needle: Float, channel: String, text: TextMeasurer) {
+private fun DrawScope.drawVuMeter(topLeft: Offset, size: Size, needle: Float, channel: String, text: TextMeasurer, theme: VisTheme) {
     // A recessed window in the panel, like the meters on a tape deck: dark above, a highlight along the bottom.
     val bezel = size.height * 0.05f
     val corner = CornerRadius(bezel * 1.2f)
@@ -217,14 +211,14 @@ private fun DrawScope.drawVuMeter(topLeft: Offset, size: Size, needle: Float, ch
     drawRoundRect(Brush.verticalGradient(listOf(Color.Transparent, PsColors.BevelLight), startY = topLeft.y, endY = topLeft.y + size.height),
         topLeft, size, corner, style = Stroke(1.dp.toPx()))
     val face = Offset(topLeft.x + bezel, topLeft.y + bezel)
-    drawVuFace(face, Size(size.width - 2 * bezel, size.height - 2 * bezel), needle, channel, text)
+    drawVuFace(face, Size(size.width - 2 * bezel, size.height - 2 * bezel), needle, channel, text, theme)
 }
 
-private fun DrawScope.drawVuFace(topLeft: Offset, size: Size, needle: Float, channel: String, text: TextMeasurer) {
+private fun DrawScope.drawVuFace(topLeft: Offset, size: Size, needle: Float, channel: String, text: TextMeasurer, theme: VisTheme) {
     val h = size.height
     clipRect(topLeft.x, topLeft.y, topLeft.x + size.width, topLeft.y + h) {
         drawRoundRect(
-            Brush.verticalGradient(listOf(Color(0xFF0C1A10), PsColors.LcdBackground), startY = topLeft.y, endY = topLeft.y + h),
+            Brush.verticalGradient(listOf(theme.faceTint, PsColors.LcdBackground), startY = topLeft.y, endY = topLeft.y + h),
             topLeft, size, CornerRadius(3.dp.toPx()),
         )
         val sweep = 42f // degrees either side of straight up
@@ -234,21 +228,21 @@ private fun DrawScope.drawVuFace(topLeft: Offset, size: Size, needle: Float, cha
         fun angle(p: Float) = Math.toRadians((-90f - sweep + 2 * sweep * p).toDouble()).toFloat()
         fun at(p: Float, r: Float) = Offset(pivot.x + r * cos(angle(p)), pivot.y + r * sin(angle(p)))
 
-        // Scale: green up to 0 VU, red above.
+        // Scale: normal up to 0 VU, the theme's hot colour above.
         val zero = vuPosition(0f)
         val arcTopLeft = Offset(pivot.x - radius, pivot.y - radius)
         val arcSize = Size(radius * 2, radius * 2)
-        drawArc(PsColors.LcdMid, -90f - sweep, 2 * sweep * zero, false, arcTopLeft, arcSize, style = Stroke(h * 0.012f))
-        drawArc(Red, -90f - sweep + 2 * sweep * zero, 2 * sweep * (1 - zero), false, arcTopLeft, arcSize, style = Stroke(h * 0.03f))
+        drawArc(theme.scaleBrush(at(0f, radius).x, at(zero, radius).x), -90f - sweep, 2 * sweep * zero, false, arcTopLeft, arcSize, style = Stroke(h * 0.012f))
+        drawArc(theme.high, -90f - sweep + 2 * sweep * zero, 2 * sweep * (1 - zero), false, arcTopLeft, arcSize, style = Stroke(h * 0.03f))
 
         val label = TextStyle(fontSize = (h * 0.065f).toSp(), color = PsColors.TextDim)
         for (vu in VuTicks) {
             val p = vuPosition(vu.toFloat())
             val major = vu in VuLabels
-            val color = if (vu > 0) Red else PsColors.Lcd
+            val color = if (vu > 0) theme.high else theme.scaleTick
             drawLine(color, at(p, radius), at(p, radius + h * (if (major) 0.06f else 0.035f)), strokeWidth = h * 0.008f)
             if (major) {
-                val layout = text.measure(if (vu > 0) "+$vu" else "$vu", label.copy(color = if (vu > 0) Red else PsColors.TextDim))
+                val layout = text.measure(if (vu > 0) "+$vu" else "$vu", label.copy(color = if (vu > 0) theme.high else PsColors.TextDim))
                 val c = at(p, radius + h * 0.12f)
                 drawText(layout, topLeft = Offset(c.x - layout.size.width / 2, c.y - layout.size.height / 2))
             }
@@ -261,13 +255,13 @@ private fun DrawScope.drawVuFace(topLeft: Offset, size: Size, needle: Float, cha
 
         // Peak lamp lights in the red.
         val lamp = Offset(topLeft.x + size.width - h * 0.08f, topLeft.y + h * 0.08f)
-        drawCircle(if (needle > zero) Red else Red.copy(alpha = 0.15f), h * 0.025f, lamp)
+        drawCircle(if (needle > zero) theme.high else theme.high.copy(alpha = 0.15f), h * 0.025f, lamp)
 
         // Needle, with a soft shadow, running down under the cover.
         val tip = at(needle, radius + h * 0.05f)
         val shadow = Offset(h * 0.012f, h * 0.012f)
         drawLine(Color.Black.copy(alpha = 0.5f), pivot + shadow, tip + shadow, strokeWidth = h * 0.014f, cap = StrokeCap.Round)
-        drawLine(PsColors.Amber, pivot, tip, strokeWidth = h * 0.01f, cap = StrokeCap.Round)
+        drawLine(theme.needle, pivot, tip, strokeWidth = h * 0.01f, cap = StrokeCap.Round)
 
         // The cover over the pivot.
         drawRect(Color(0xFF060A07), Offset(topLeft.x, coverTop), Size(size.width, topLeft.y + h - coverTop))

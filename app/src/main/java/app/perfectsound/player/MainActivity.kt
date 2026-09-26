@@ -96,6 +96,7 @@ class MainActivity : ComponentActivity() {
             var equalizerVisible by remember { mutableStateOf(prefs.equalizerVisible) }
             var playlistVisible by remember { mutableStateOf(prefs.playlistVisible) }
             var visMode by remember { mutableStateOf(prefs.visMode) }
+            var visTheme by remember { mutableStateOf(prefs.visTheme) }
             val capturing = levels.source == AudioLevels.Source.Capture
 
             // Remote apps report position occasionally; extrapolate it and read the system volume.
@@ -170,6 +171,8 @@ class MainActivity : ComponentActivity() {
                         levels = levels,
                         visMode = visMode,
                         onVisModeChange = { visMode = it; prefs.visMode = it },
+                        visTheme = visTheme,
+                        onVisThemeChange = { visTheme = it; prefs.visTheme = it },
                         modifier = modifier,
                         eqOn = if (panel.onEqToggle != null) panel.eqOn else eqSettings.enabled,
                         onEqToggle = panel.onEqToggle,

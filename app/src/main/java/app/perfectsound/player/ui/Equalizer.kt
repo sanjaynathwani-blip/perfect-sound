@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -61,6 +62,8 @@ fun EqSection(
     levels: AudioLevels.Snapshot,
     visMode: VisMode,
     onVisModeChange: (VisMode) -> Unit,
+    visTheme: VisTheme,
+    onVisThemeChange: (VisTheme) -> Unit,
     modifier: Modifier = Modifier,
     on: Boolean = settings.enabled,
     onToggle: (() -> Unit)? = null,
@@ -69,6 +72,10 @@ fun EqSection(
         Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             BasicText(visMode.label, Modifier.height(20.dp).wrapContentHeight(), style = LabelStyle.copy(letterSpacing = 2.sp))
             Spacer(Modifier.weight(1f))
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                LedToggle("COLOR", false, { onVisThemeChange(visTheme.next()) }, led = false)
+                ThemeDots(visTheme, Modifier.padding(top = 4.dp))
+            }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 LedToggle("MODE", false, { onVisModeChange(visMode.next()) }, led = false)
                 ModeDots(visMode, Modifier.padding(top = 4.dp))
@@ -101,7 +108,7 @@ fun EqSection(
                         .clip(RoundedCornerShape(3.dp))
                         .clickable(remember { MutableInteractionSource() }, indication = null) { onVisModeChange(visMode.next()) },
                 ) {
-                    Visualizer(visMode, levels, Modifier.fillMaxSize().padding(horizontal = 4.dp, vertical = 3.dp))
+                    Visualizer(visMode, levels, Modifier.fillMaxSize().padding(horizontal = 4.dp, vertical = 3.dp), visTheme)
                     if (EQ_TUNING_ENABLED && visMode == VisMode.Bands) Row(Modifier.fillMaxSize()) {
                         settings.bands.forEachIndexed { i, v ->
                             VSlider(v, { nv ->
@@ -126,6 +133,16 @@ private fun ModeDots(current: VisMode, modifier: Modifier = Modifier) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
         VisMode.entries.forEach {
             Box(Modifier.size(3.dp).background(if (it == current) PsColors.Lcd else PsColors.TextDim.copy(alpha = 0.35f), CircleShape))
+        }
+    }
+}
+
+/** One tiny dot per colour theme, each in its own colours, the current one bright. */
+@Composable
+private fun ThemeDots(current: VisTheme, modifier: Modifier = Modifier) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        VisTheme.entries.forEach {
+            Box(Modifier.size(3.dp).alpha(if (it == current) 1f else 0.3f).background(it.swatch(), CircleShape))
         }
     }
 }

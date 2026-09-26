@@ -72,6 +72,8 @@ fun NowPlayingPanel(
     levels: AudioLevels.Snapshot,
     visMode: VisMode,
     onVisModeChange: (VisMode) -> Unit,
+    visTheme: VisTheme,
+    onVisThemeChange: (VisTheme) -> Unit,
     modifier: Modifier = Modifier,
     /** In remote mode: whether audio is being captured for the levels, and how to toggle it. */
     eqOn: Boolean = eq.enabled,
@@ -91,7 +93,7 @@ fun NowPlayingPanel(
                 }
                 Column(Modifier.weight(1f).fillMaxHeight()) {
                     if (message != null) Message(message) else TrackDetails(info, hint)
-                    if (equalizerVisible) EqSection(eq, onEqChange, levels, visMode, onVisModeChange, Modifier.padding(top = 10.dp).weight(1f).fillMaxWidth(), eqOn, onEqToggle)
+                    if (equalizerVisible) EqSection(eq, onEqChange, levels, visMode, onVisModeChange, visTheme, onVisThemeChange, Modifier.padding(top = 10.dp).weight(1f).fillMaxWidth(), eqOn, onEqToggle)
                 }
             }
         }

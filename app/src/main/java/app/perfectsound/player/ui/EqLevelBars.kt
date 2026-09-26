@@ -16,10 +16,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
-private val BarBottom = Color(0xFF1FB84A)
-private val BarTop = Color(0xFFE8F54A)
-private val PeakColor = Color(0xFFFFC640)
-private val TrackColor = Color(0xFF0B1A10)
 
 /** Levels as shown on screen: they rise instantly and fall smoothly, with slower falling peaks. */
 class FallingLevels(val shown: FloatArray, val peaks: FloatArray)
@@ -58,7 +54,7 @@ fun rememberFallingLevels(levels: FloatArray, fallPerSecond: Float = 1.6f, peakF
  * Bars rise instantly and fall smoothly so they "bounce" with the music.
  */
 @Composable
-fun EqLevelBars(levels: FloatArray, modifier: Modifier = Modifier) {
+fun EqLevelBars(levels: FloatArray, modifier: Modifier = Modifier, theme: VisTheme = VisTheme.Green) {
     val falling = rememberFallingLevels(levels)
     Canvas(modifier) {
         val shown = falling.shown
@@ -68,14 +64,13 @@ fun EqLevelBars(levels: FloatArray, modifier: Modifier = Modifier) {
         val gap = size.width * 0.18f / n
         val barWidth = (size.width - gap * (n - 1)) / n
         val radius = CornerRadius(barWidth * 0.12f)
-        val gradient = Brush.verticalGradient(listOf(BarTop, BarBottom), startY = 0f, endY = size.height)
         for (i in 0 until n) {
             val x = i * (barWidth + gap)
-            drawRoundRect(TrackColor, Offset(x, 0f), Size(barWidth, size.height), radius)
+            drawRoundRect(theme.track, Offset(x, 0f), Size(barWidth, size.height), radius)
             val h = shown[i] * size.height
-            drawRoundRect(gradient, Offset(x, size.height - h), Size(barWidth, h), radius)
+            drawRoundRect(theme.barBrush((i + 0.5f) / n, 0f, size.height), Offset(x, size.height - h), Size(barWidth, h), radius)
             val peakY = size.height - peaks[i] * size.height
-            drawRect(PeakColor, Offset(x, (peakY - 3f).coerceAtLeast(0f)), Size(barWidth, 3f))
+            drawRect(theme.peak, Offset(x, (peakY - 3f).coerceAtLeast(0f)), Size(barWidth, 3f))
         }
     }
 }

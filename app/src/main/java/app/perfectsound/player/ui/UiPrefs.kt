@@ -28,6 +28,10 @@ class UiPrefs(context: Context) {
         get() = prefs.getString("visMode", null)?.let { name -> VisMode.entries.firstOrNull { it.name == name } } ?: VisMode.Bands
         set(value) = prefs.edit().putString("visMode", value.name).apply()
 
+    var visTheme: VisTheme
+        get() = prefs.getString("visTheme", null)?.let { name -> VisTheme.entries.firstOrNull { it.name == name } } ?: VisTheme.Green
+        set(value) = prefs.edit().putString("visTheme", value.name).apply()
+
     var eq: EqSettings
         get() = runCatching {
             val o = JSONObject(prefs.getString("eq", null) ?: return EqSettings())
