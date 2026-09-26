@@ -33,8 +33,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.media3.common.Player
-import app.perfectsound.player.playback.PlayerConnection
 import app.perfectsound.player.ui.components.HSlider
 import app.perfectsound.player.ui.components.IconButton
 import app.perfectsound.player.ui.components.Icons
@@ -59,12 +57,18 @@ interface MainPanelActions {
     fun cycleRepeat()
     fun toggleEqualizer()
     fun togglePlaylist()
+    fun selectSource(source: Source)
 }
+
+/** A source button: [available] is false when the app isn't installed. */
+data class SourceOption(val source: Source, val label: String, val available: Boolean)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MainPanel(
-    state: PlayerConnection.State,
+    state: DisplayState,
+    source: Source,
+    sources: List<SourceOption>,
     levels: FloatArray,
     equalizerVisible: Boolean,
     playlistVisible: Boolean,
@@ -116,10 +120,8 @@ fun MainPanel(
                             .padding(horizontal = 8.dp),
                         contentAlignment = Alignment.CenterStart,
                     ) {
-                        val title = state.currentTrack?.let { "${state.currentIndex + 1}. ${it.displayName} (${formatTime(it.durationMs)})" }
-                            ?: "Perfect Sound"
                         BasicText(
-                            title,
+                            state.title,
                             style = LcdTextStyle,
                             maxLines = 1,
                             modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE, initialDelayMillis = 1500),
@@ -152,9 +154,17 @@ fun MainPanel(
                     if (seeking && state.durationMs > 0) actions.seekTo((seekFraction * state.durationMs).toLong())
                     seeking = false
                 },
-                enabled = state.currentTrack != null && state.durationMs > 0,
+                enabled = state.canSeek,
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            // Source: the built-in player, or remote control of a streaming app
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                BasicText("SOURCE", style = LabelStyle, modifier = Modifier.padding(end = 4.dp))
+                sources.forEach { option ->
+                    LedToggle(option.label, option.source == source, { actions.selectSource(option.source) }, enabled = option.available)
+                }
+            }
 
             // Transport and toggles
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -169,10 +179,7 @@ fun MainPanel(
                 Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                         LedToggle("SHUFFLE", state.shuffle, actions::toggleShuffle)
-                        LedToggle(
-                            when (state.repeatMode) { Player.REPEAT_MODE_ONE -> "REPEAT 1"; else -> "REPEAT" },
-                            state.repeatMode != Player.REPEAT_MODE_OFF, actions::cycleRepeat,
-                        )
+                        LedToggle(if (state.repeat == Repeat.One) "REPEAT 1" else "REPEAT", state.repeat != Repeat.Off, actions::cycleRepeat)
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                         LedToggle("EQ", equalizerVisible, actions::toggleEqualizer)
@@ -201,7 +208,7 @@ private fun LcdField(value: String, unit: String) {
 }
 
 @Composable
-private fun StatusIndicator(state: PlayerConnection.State, modifier: Modifier) {
+private fun StatusIndicator(state: DisplayState, modifier: Modifier) {
     Canvas(modifier) {
         when {
             state.isPlaying -> drawPath(Path().apply {

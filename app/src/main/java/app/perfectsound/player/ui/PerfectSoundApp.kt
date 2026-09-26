@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.perfectsound.player.audio.AudioLevels
-import app.perfectsound.player.playback.PlayerConnection
 import app.perfectsound.player.ui.theme.PsColors
 
 private val MainPanelWidth = 470.dp
@@ -30,7 +29,9 @@ private val StackedMinHeight = 600.dp
  */
 @Composable
 fun PerfectSoundApp(
-    state: PlayerConnection.State,
+    display: DisplayState,
+    source: Source,
+    sources: List<SourceOption>,
     levels: AudioLevels.Snapshot,
     eq: EqSettings,
     onEqChange: (EqSettings) -> Unit,
@@ -39,17 +40,18 @@ fun PerfectSoundApp(
     capturing: Boolean,
     onToggleCapture: () -> Unit,
     mainActions: MainPanelActions,
-    playlistActions: PlaylistActions,
+    /** The playlist, or the remote panel in remote mode. */
+    rightPanel: @Composable (Modifier) -> Unit,
 ) {
     val gap = 2.dp
     BoxWithConstraints(Modifier.fillMaxSize().background(PsColors.Background)) {
         val main: @Composable (Modifier) -> Unit = {
-            MainPanel(state, levels.bands, equalizerVisible, playlistVisible, mainActions, it)
+            MainPanel(display, source, sources, levels.bands, equalizerVisible, playlistVisible, mainActions, it)
         }
         val equalizer: @Composable (Modifier) -> Unit = {
             EqPanel(eq, onEqChange, levels, capturing, onToggleCapture, it)
         }
-        val playlist: @Composable (Modifier) -> Unit = { PlaylistPanel(state, playlistActions, it) }
+        val playlist = rightPanel
 
         if (maxWidth >= WideLayoutMinWidth && playlistVisible) {
             Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
