@@ -105,7 +105,7 @@ fun PerfectSoundApp(
             var menu by remember { mutableStateOf<Offset?>(null) }
             var help by remember { mutableStateOf(false) }
             Box(m.onRightClick { menu = it }) {
-                MainPanel(display, source, sources, levels.bands, equalizerVisible, playlistVisible, mainActions, Modifier.fillMaxWidth())
+                MainPanel(display, source, sources, levels.bands, playlistVisible, mainActions, Modifier.fillMaxWidth())
                 menu?.let { pos ->
                     PopupMenu(
                         items = listOf(

@@ -73,7 +73,6 @@ fun MainPanel(
     source: Source,
     sources: List<SourceOption>,
     levels: FloatArray,
-    equalizerVisible: Boolean,
     playlistVisible: Boolean,
     actions: MainPanelActions,
     modifier: Modifier = Modifier,
@@ -179,16 +178,11 @@ fun MainPanel(
                 Spacer(Modifier.width(6.dp))
                 IconButton(actions::open, width = 34.dp, icon = Icons.Eject)
                 Spacer(Modifier.weight(1f))
-                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                        LedToggle("SHUFFLE", state.shuffle, actions::toggleShuffle)
-                        LedToggle(if (state.repeat == Repeat.One) "REPEAT 1" else "REPEAT", state.repeat != Repeat.Off, actions::cycleRepeat)
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                        LedToggle("EQ", equalizerVisible, actions::toggleEqualizer)
-                        // Remote mode has no playlist: the streaming app owns the queue.
-                        LedToggle("PL", playlistVisible && source == Source.Local, actions::togglePlaylist, enabled = source == Source.Local)
-                    }
+                Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    LedToggle("SHUFFLE", state.shuffle, actions::toggleShuffle)
+                    LedToggle(if (state.repeat == Repeat.One) "REPEAT 1" else "REPEAT", state.repeat != Repeat.Off, actions::cycleRepeat)
+                    // Remote mode has no playlist: the streaming app owns the queue.
+                    LedToggle("PL", playlistVisible && source == Source.Local, actions::togglePlaylist, enabled = source == Source.Local)
                 }
             }
         }
