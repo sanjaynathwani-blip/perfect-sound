@@ -28,10 +28,15 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class RemoteSessions(private val context: Context) {
 
-    enum class App(val packageName: String, val label: String) {
-        Spotify("com.spotify.music", "Spotify"),
+    /**
+     * Android doesn't reveal another app's stream format, so [typicalKbps] / [typicalSampleRateHz]
+     * are what the app usually streams: Spotify's "Automatic" quality (160 kbps, 44.1 kHz), and
+     * YouTube Music on the web (Opus, about 160 kbps at 48 kHz).
+     */
+    enum class App(val packageName: String, val label: String, val typicalKbps: Int, val typicalSampleRateHz: Int) {
+        Spotify("com.spotify.music", "Spotify", 160, 44_100),
         /** Whatever a Chrome tab is playing (YouTube Music on the web, YouTube, SoundCloud…). */
-        Chrome("com.android.chrome", "Chrome"),
+        Chrome("com.android.chrome", "Chrome", 160, 48_000),
     }
 
     data class NowPlaying(

@@ -76,6 +76,8 @@ fun RemoteSessions.NowPlaying?.toDisplay(app: RemoteSessions.App, positionMs: Lo
         },
         canShuffle = np?.canShuffle == true,
         canRepeat = np?.canRepeat == true,
+        bitrateKbps = app.typicalKbps.takeIf { np?.title != null },
+        sampleRateHz = app.typicalSampleRateHz.takeIf { np?.title != null },
         channels = if (np?.title != null) 2 else null,
     )
 }
