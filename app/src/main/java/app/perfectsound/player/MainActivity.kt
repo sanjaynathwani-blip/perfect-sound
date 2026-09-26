@@ -144,7 +144,7 @@ class MainActivity : ComponentActivity() {
                     override fun cycleRepeat() = route({ player.cycleRepeat() }) { remote.cycleRepeat(it) }
                     override fun toggleEqualizer() { equalizerVisible = !equalizerVisible; prefs.equalizerVisible = equalizerVisible }
                     override fun togglePlaylist() { playlistVisible = !playlistVisible; prefs.playlistVisible = playlistVisible }
-                    override fun selectSource(source: Source) { this@MainActivity.source.value = source; prefs.source = source }
+                    override fun selectSource(source: Source) = switchSource(source)
                     override fun seekBy(deltaMs: Long) = route({ player.seekBy(deltaMs) }) { app ->
                         val np = remote.state.value.nowPlaying[app]
                         if (np?.canSeek == true) remote.seekTo(app, (np.positionAt() + deltaMs).coerceAtLeast(0))
@@ -270,7 +270,7 @@ class MainActivity : ComponentActivity() {
             val items = importer.fromDocuments(listOf(uri))
             if (items.isEmpty()) return@launch
             player.state.first { it.connected } // on a cold start the player may still be connecting
-            source.value = Source.Local
+            switchSource(Source.Local)
             val first = player.state.value.playlist.size
             player.addTracks(items)
             player.playAt(first)
@@ -311,6 +311,14 @@ class MainActivity : ComponentActivity() {
         return true
     }
 
+    /** Changes source, pausing the old one first so two sources never play at once. */
+    private fun switchSource(new: Source) {
+        if (new == source.value) return
+        route({ player.pause() }) { remote.pause(it) }
+        source.value = new
+        prefs.source = new
+    }
+
     /** Sends a command to the built-in player or to the streaming app being remote-controlled. */
     private inline fun route(local: () -> Unit, remoteCommand: (RemoteSessions.App) -> Unit) {
         when (val s = source.value) {
@@ -331,7 +339,7 @@ class MainActivity : ComponentActivity() {
 
     private fun addItems(items: List<MediaItem>) {
         if (items.isEmpty()) return
-        source.value = Source.Local
+        switchSource(Source.Local)
         if (replaceOnImport) {
             replaceOnImport = false
             player.clear()
