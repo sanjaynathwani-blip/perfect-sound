@@ -168,6 +168,8 @@ class MainActivity : ComponentActivity() {
                         onEqChange = { eq.value = it; prefs.eq = it },
                         levels = levels,
                         modifier = modifier,
+                        eqOn = if (panel.onEqToggle != null) panel.eqOn else eqSettings.enabled,
+                        onEqToggle = panel.onEqToggle,
                     )
                 },
                 playlist = if (currentSource == Source.Local) { modifier -> PlaylistPanel(local, playlistActions, modifier) } else null,
@@ -183,6 +185,9 @@ class MainActivity : ComponentActivity() {
         val message: PanelMessage? = null,
         val buttons: List<PanelButton> = emptyList(),
         val hint: String? = null,
+        /** Remote mode: ON captures the app's audio so the equalizer bounces. */
+        val eqOn: Boolean = false,
+        val onEqToggle: (() -> Unit)? = null,
     )
 
     @Composable
@@ -217,10 +222,7 @@ class MainActivity : ComponentActivity() {
         val np = state.nowPlaying[app]
         val art = remember(np?.art) { np?.art?.asImageBitmap() }
         val name = app.label.uppercase()
-        val buttons = listOf(
-            PanelButton("OPEN $name") { remote.launch(app) },
-            PanelButton("EQ LEVELS", on = capturing, onClick = toggleCapture),
-        )
+        val buttons = listOf(PanelButton("OPEN $name") { remote.launch(app) })
         return when {
             !state.hasAccess -> NowPlayingContent(
                 label = name,
@@ -231,19 +233,25 @@ class MainActivity : ComponentActivity() {
                         "for Perfect Sound. It's only used to read and control media playback.",
                     "GRANT ACCESS",
                 ) { startActivity(remote.accessSettingsIntent()) },
-                buttons = buttons.take(1),
+                buttons = buttons,
+                eqOn = capturing,
+                onEqToggle = toggleCapture,
             )
             np?.title == null -> NowPlayingContent(
                 label = name,
                 info = NowPlayingInfo(),
                 message = PanelMessage("Nothing playing in ${app.label}", "Start something in ${app.label}, then control it from here."),
                 buttons = buttons,
+                eqOn = capturing,
+                onEqToggle = toggleCapture,
             )
             else -> NowPlayingContent(
                 label = name,
                 info = NowPlayingInfo(np.title, np.artist, np.album, art),
                 buttons = buttons,
-                hint = if (capturing) null else "Turn on EQ LEVELS to make the equalizer bounce to ${app.label}. Android will ask to capture audio each time.",
+                hint = if (capturing) null else "Turn the equalizer ON to make it bounce to ${app.label}. Android will ask to capture audio each time.",
+                eqOn = capturing,
+                onEqToggle = toggleCapture,
             )
         }
     }

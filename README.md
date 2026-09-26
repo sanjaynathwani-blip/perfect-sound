@@ -22,13 +22,13 @@ your browser or Files app the first time.
   the web) is playing: title, artist, album art, position, play/pause/skip/seek, plus shuffle and
   repeat for Spotify. The audio stays in those apps.
 - **Bouncing equalizer**: live levels for the ten classic bands (60 Hz – 16 kHz). For your own
-  files this needs no permissions. For streaming apps, turn on **EQ LEVELS** (Android asks to
+  files this needs no permissions. For streaming apps, turn the equalizer **ON** (Android asks to
   capture audio each session).
 - **Playlist**: add files or whole folders, drop files onto the window, or "Open with" from the
   Files app. Ctrl/Shift multi-select, drag to reorder, and right-click menus.
 - **Keyboard**: the classic shortcuts (see below).
 
-Coming in Phase 2: a working 10-band equalizer with preamp and presets, and a visualizer.
+Coming in Phase 2: a visualizer. (Audio tuning — preamp, band sliders, presets — is built but switched off for now.)
 
 ## Keyboard shortcuts
 

@@ -27,6 +27,12 @@ import app.perfectsound.player.ui.components.LedToggle
 import app.perfectsound.player.ui.components.VSlider
 import app.perfectsound.player.ui.theme.PsColors
 
+/**
+ * Whether the equalizer shows its tuning controls (preamp, band sliders, auto, presets). Off for now:
+ * the equalizer is a visualization only. The settings are still kept and saved.
+ */
+private const val EQ_TUNING_ENABLED = false
+
 /** Equalizer settings: preamp and ten bands, each -1..+1 (maps to ±12 dB). */
 data class EqSettings(
     val enabled: Boolean = false,
@@ -34,30 +40,39 @@ data class EqSettings(
     val bands: List<Float> = List(SpectrumAnalyzer.BAND_CENTERS_HZ.size) { 0f },
 )
 
-/** Preamp and ten band sliders, with live levels bouncing behind them. Sits inside the now-playing panel. */
+/**
+ * Preamp and ten band sliders, with live levels bouncing behind them. Sits inside the now-playing panel.
+ * [onToggle] overrides what ON does: in remote mode it starts capturing audio so the levels bounce,
+ * since Android doesn't let us process another app's sound.
+ */
 @Composable
 fun EqSection(
     settings: EqSettings,
     onSettingsChange: (EqSettings) -> Unit,
     levels: AudioLevels.Snapshot,
     modifier: Modifier = Modifier,
+    on: Boolean = settings.enabled,
+    onToggle: (() -> Unit)? = null,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             BasicText("EQUALIZER", style = LabelStyle.copy(letterSpacing = 2.sp))
             Spacer(Modifier.weight(1f))
-            // Sound processing arrives in Phase 2; until then the sliders are visual only.
-            LedToggle("ON", settings.enabled, { onSettingsChange(settings.copy(enabled = !settings.enabled)) }, enabled = false)
-            LedToggle("AUTO", false, {}, enabled = false)
-            LedToggle("PRESETS", false, {}, enabled = false)
+            // Local files bounce without a switch; in remote mode ON starts the audio capture.
+            if (onToggle != null) LedToggle("ON", on, onToggle)
+            if (EQ_TUNING_ENABLED) {
+                if (onToggle == null) LedToggle("ON", on, { onSettingsChange(settings.copy(enabled = !settings.enabled)) }, enabled = false)
+                LedToggle("AUTO", false, {}, enabled = false)
+                LedToggle("PRESETS", false, {}, enabled = false)
+            }
         }
         Row(Modifier.fillMaxWidth().weight(1f)) {
             // Preamp
-            Column(Modifier.width(28.dp).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
+            if (EQ_TUNING_ENABLED) Column(Modifier.width(28.dp).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
                 VSlider(settings.preamp, { onSettingsChange(settings.copy(preamp = it)) }, Modifier.weight(1f).fillMaxWidth())
                 BasicText("PRE", style = LabelStyle)
             }
-            Spacer(Modifier.width(6.dp))
+            if (EQ_TUNING_ENABLED) Spacer(Modifier.width(6.dp))
             // Bands, with live levels bouncing behind the sliders
             Column(Modifier.weight(1f).fillMaxHeight()) {
                 Box(
@@ -68,7 +83,7 @@ fun EqSection(
                         .border(1.dp, PsColors.BevelDark, RoundedCornerShape(3.dp)),
                 ) {
                     EqLevelBars(levels.bands, Modifier.fillMaxSize().padding(horizontal = 4.dp, vertical = 3.dp))
-                    Row(Modifier.fillMaxSize()) {
+                    if (EQ_TUNING_ENABLED) Row(Modifier.fillMaxSize()) {
                         settings.bands.forEachIndexed { i, v ->
                             VSlider(v, { nv ->
                                 onSettingsChange(settings.copy(bands = settings.bands.toMutableList().also { it[i] = nv }))

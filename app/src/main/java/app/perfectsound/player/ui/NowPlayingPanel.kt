@@ -71,6 +71,9 @@ fun NowPlayingPanel(
     onEqChange: (EqSettings) -> Unit,
     levels: AudioLevels.Snapshot,
     modifier: Modifier = Modifier,
+    /** In remote mode: whether audio is being captured for the levels, and how to toggle it. */
+    eqOn: Boolean = eq.enabled,
+    onEqToggle: (() -> Unit)? = null,
 ) {
     Column(modifier.background(PsColors.Panel)) {
         TitleStrip(label)
@@ -86,7 +89,7 @@ fun NowPlayingPanel(
                 }
                 Column(Modifier.weight(1f).fillMaxHeight()) {
                     if (message != null) Message(message) else TrackDetails(info, hint)
-                    if (equalizerVisible) EqSection(eq, onEqChange, levels, Modifier.padding(top = 10.dp).weight(1f).fillMaxWidth())
+                    if (equalizerVisible) EqSection(eq, onEqChange, levels, Modifier.padding(top = 10.dp).weight(1f).fillMaxWidth(), eqOn, onEqToggle)
                 }
             }
         }
