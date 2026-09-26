@@ -17,6 +17,8 @@ object AudioLevels {
         val bars: FloatArray = FloatArray(SpectrumAnalyzer.BAR_COUNT),
         /** A short, zero-crossing aligned stretch of the waveform (-1..1) for the oscilloscope. */
         val wave: FloatArray = FloatArray(0),
+        /** Recent loudness of the left and right channels in dBFS, for the VU meters. */
+        val channelDb: FloatArray = floatArrayOf(-96f, -96f),
     )
 
     private val _state = MutableStateFlow(Snapshot())
@@ -30,3 +32,7 @@ object AudioLevels {
         _state.value = Snapshot()
     }
 }
+
+/** RMS in dBFS of [count] samples whose squares add up to [sumSquares]. */
+fun toDb(sumSquares: Double, count: Int): Float =
+    20f * kotlin.math.log10(kotlin.math.sqrt(sumSquares / count.coerceAtLeast(1)).toFloat().coerceAtLeast(1e-5f))

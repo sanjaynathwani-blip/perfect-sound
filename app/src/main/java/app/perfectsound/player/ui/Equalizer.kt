@@ -87,8 +87,10 @@ fun EqSection(
                     Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .background(PsColors.LcdBackground, RoundedCornerShape(3.dp))
-                        .border(1.dp, PsColors.BevelDark, RoundedCornerShape(3.dp))
+                        // The VU meters are their own little windows on the panel, so they get no LCD screen behind them.
+                        .then(if (visMode == VisMode.Vu) Modifier else Modifier
+                            .background(PsColors.LcdBackground, RoundedCornerShape(3.dp))
+                            .border(1.dp, PsColors.BevelDark, RoundedCornerShape(3.dp)))
                         .clip(RoundedCornerShape(3.dp))
                         .clickable(remember { MutableInteractionSource() }, indication = null) { onVisModeChange(visMode.next()) },
                 ) {

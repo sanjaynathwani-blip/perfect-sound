@@ -21,15 +21,14 @@ private val BarTop = Color(0xFFE8F54A)
 private val PeakColor = Color(0xFFFFC640)
 private val TrackColor = Color(0xFF0B1A10)
 
-/**
- * Vertical level bars, one per band, with Winamp-style falling peak markers.
- * Bars rise instantly and fall smoothly so they "bounce" with the music.
- */
+/** Levels as shown on screen: they rise instantly and fall smoothly, with slower falling peaks. */
+class FallingLevels(val shown: FloatArray, val peaks: FloatArray)
+
+/** Animates [levels] every frame so bars "bounce" with the music instead of flickering. */
 @Composable
-fun EqLevelBars(levels: FloatArray, modifier: Modifier = Modifier) {
+fun rememberFallingLevels(levels: FloatArray, fallPerSecond: Float = 1.6f, peakFallPerSecond: Float = 0.35f): FallingLevels {
     val target by rememberUpdatedState(levels)
-    var shown by remember { mutableStateOf(FloatArray(levels.size)) }
-    var peaks by remember { mutableStateOf(FloatArray(levels.size)) }
+    var state by remember { mutableStateOf(FallingLevels(FloatArray(levels.size), FloatArray(levels.size))) }
 
     LaunchedEffect(Unit) {
         var last = 0L
@@ -38,19 +37,32 @@ fun EqLevelBars(levels: FloatArray, modifier: Modifier = Modifier) {
                 val dt = if (last == 0L) 0f else (now - last) / 1e9f
                 last = now
                 val t = target
-                shown = FloatArray(t.size) { i ->
-                    val current = shown.getOrElse(i) { 0f }
-                    if (t[i] >= current) t[i] else (current - dt * 1.6f).coerceAtLeast(t[i])
+                val old = state
+                val shown = FloatArray(t.size) { i ->
+                    val current = old.shown.getOrElse(i) { 0f }
+                    if (t[i] >= current) t[i] else (current - dt * fallPerSecond).coerceAtLeast(t[i])
                 }
-                peaks = FloatArray(t.size) { i ->
-                    val p = peaks.getOrElse(i) { 0f }
-                    if (shown[i] >= p) shown[i] else (p - dt * 0.35f).coerceAtLeast(0f)
+                val peaks = FloatArray(t.size) { i ->
+                    val p = old.peaks.getOrElse(i) { 0f }
+                    if (shown[i] >= p) shown[i] else (p - dt * peakFallPerSecond).coerceAtLeast(0f)
                 }
+                state = FallingLevels(shown, peaks)
             }
         }
     }
+    return state
+}
 
+/**
+ * Vertical level bars, one per band, with Winamp-style falling peak markers.
+ * Bars rise instantly and fall smoothly so they "bounce" with the music.
+ */
+@Composable
+fun EqLevelBars(levels: FloatArray, modifier: Modifier = Modifier) {
+    val falling = rememberFallingLevels(levels)
     Canvas(modifier) {
+        val shown = falling.shown
+        val peaks = falling.peaks
         val n = shown.size
         if (n == 0) return@Canvas
         val gap = size.width * 0.18f / n

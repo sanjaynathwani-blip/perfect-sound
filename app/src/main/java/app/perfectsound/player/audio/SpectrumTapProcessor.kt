@@ -9,13 +9,15 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 /**
- * Pass-through audio processor that copies the decoded PCM (mixed to mono) into a ring buffer so
- * the equalizer can show levels for local playback without any extra permission.
+ * Pass-through audio processor that copies the decoded PCM into ring buffers (mixed to mono, plus
+ * left and right for the VU meters) so the visualizer works for local playback without any extra permission.
  */
 @OptIn(UnstableApi::class)
 class SpectrumTapProcessor : BaseAudioProcessor() {
 
     private val ring = FloatArray(RING_SIZE)
+    private val left = FloatArray(RING_SIZE)
+    private val right = FloatArray(RING_SIZE)
     private var written = 0L
     private var channels = 2
 
@@ -37,9 +39,16 @@ class SpectrumTapProcessor : BaseAudioProcessor() {
         synchronized(ring) {
             val frames = samples.remaining() / channels
             for (f in 0 until frames) {
+                val idx = ((written + f) and RING_MASK).toInt()
                 var sum = 0
-                for (c in 0 until channels) sum += samples.get()
-                ring[((written + f) and RING_MASK).toInt()] = sum / (channels * 32768f)
+                for (c in 0 until channels) {
+                    val s = samples.get()
+                    sum += s
+                    if (c == 0) left[idx] = s / 32768f
+                    if (c == 1) right[idx] = s / 32768f
+                }
+                if (channels == 1) right[idx] = left[idx]
+                ring[idx] = sum / (channels * 32768f)
             }
             written += frames
         }
@@ -49,6 +58,8 @@ class SpectrumTapProcessor : BaseAudioProcessor() {
     override fun onFlush() {
         synchronized(ring) {
             ring.fill(0f)
+            left.fill(0f)
+            right.fill(0f)
             written = 0
         }
     }
@@ -68,6 +79,20 @@ class SpectrumTapProcessor : BaseAudioProcessor() {
                 else ring[(idx and RING_MASK).toInt()]
             }
         }
+    }
+
+    /** RMS of the left and right channels, in dBFS, over the [frames] frames ending at [end]. */
+    fun channelDb(end: Long, frames: Int): FloatArray {
+        val sums = DoubleArray(2)
+        synchronized(ring) {
+            for (idx in end - frames until end) {
+                if (idx < 0 || idx >= written || written - idx > RING_SIZE) continue
+                val i = (idx and RING_MASK).toInt()
+                sums[0] += left[i] * left[i]
+                sums[1] += right[i] * right[i]
+            }
+        }
+        return FloatArray(2) { toDb(sums[it], frames) }
     }
 
     companion object {

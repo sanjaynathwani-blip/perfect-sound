@@ -145,12 +145,15 @@ class SpectrumAnalyzer(
         const val BAR_COUNT = 64
         private const val BAR_LOW_HZ = 40f
         private const val BAR_HIGH_HZ = 16_000f
+        /** One-pole low-pass for the scope, about 1.5 kHz at 48 kHz. */
+        private const val SCOPE_SMOOTHING = 0.18f
 
         /**
          * A steady oscilloscope trace: [span] samples starting at a rising zero crossing near the end
-         * of [frame] (so a held note doesn't jitter), averaged down to [points] values.
+         * of [frame] (so a held note doesn't jitter), low-passed so the line stays calm, and averaged
+         * down to [points] values.
          */
-        fun scopeTrace(frame: FloatArray, span: Int = 1024, points: Int = 512): FloatArray {
+        fun scopeTrace(frame: FloatArray, span: Int = 1024, points: Int = 256): FloatArray {
             if (frame.size < span) return FloatArray(points)
             val latest = frame.size - span
             var start = latest
@@ -158,9 +161,13 @@ class SpectrumAnalyzer(
                 if (frame[i - 1] < 0f && frame[i] >= 0f) { start = i; break }
             }
             val step = span / points
+            var smooth = frame[start]
             return FloatArray(points) { p ->
                 var sum = 0f
-                for (k in 0 until step) sum += frame[start + p * step + k]
+                for (k in 0 until step) {
+                    smooth += (frame[start + p * step + k] - smooth) * SCOPE_SMOOTHING
+                    sum += smooth
+                }
                 sum / step
             }
         }

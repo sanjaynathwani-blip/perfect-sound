@@ -59,7 +59,7 @@ class SpectrumAnalyzerTest {
     fun `scope trace starts on a rising zero crossing`() {
         val phaseShifted = FloatArray(4096) { i -> sin(2 * PI * 440 * i / rate + 1.0).toFloat() }
         val trace = SpectrumAnalyzer.scopeTrace(phaseShifted)
-        assertEquals(512, trace.size)
+        assertEquals(256, trace.size)
         assertEquals(0f, trace[0], 0.1f)
         assertTrue(trace[5] > trace[0])
     }

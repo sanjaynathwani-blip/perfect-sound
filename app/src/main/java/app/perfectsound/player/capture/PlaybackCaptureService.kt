@@ -23,10 +23,9 @@ import androidx.core.content.IntentCompat
 import app.perfectsound.player.R
 import app.perfectsound.player.audio.AudioLevels
 import app.perfectsound.player.audio.SpectrumAnalyzer
+import app.perfectsound.player.audio.toDb
 import kotlin.concurrent.thread
-import kotlin.math.log10
 import kotlin.math.max
-import kotlin.math.sqrt
 
 /**
  * Captures what other apps (Spotify, Chrome, ...) are playing via AudioPlaybackCapture and
@@ -74,13 +73,13 @@ class PlaybackCaptureService : Service() {
         val format = AudioFormat.Builder()
             .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
             .setSampleRate(SAMPLE_RATE)
-            .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+            .setChannelMask(AudioFormat.CHANNEL_IN_STEREO)
             .build()
-        val minBuffer = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
+        val minBuffer = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT)
         val ar = AudioRecord.Builder()
             .setAudioPlaybackCaptureConfig(config)
             .setAudioFormat(format)
-            .setBufferSizeInBytes(max(minBuffer, FFT_SIZE * 4))
+            .setBufferSizeInBytes(max(minBuffer, FFT_SIZE * 8))
             .build()
         record = ar
         running = true
@@ -88,25 +87,30 @@ class PlaybackCaptureService : Service() {
 
         thread(name = "playback-capture") {
             val analyzer = SpectrumAnalyzer(SAMPLE_RATE, FFT_SIZE)
-            val hop = ShortArray(FFT_SIZE / 4) // ~21 ms at 48 kHz -> smooth animation
+            val hop = ShortArray(FFT_SIZE / 4 * 2) // ~21 ms of interleaved stereo at 48 kHz -> smooth animation
             val frame = FloatArray(FFT_SIZE)
             var lastLog = 0L
             while (running) {
-                val read = ar.read(hop, 0, hop.size)
+                val read = ar.read(hop, 0, hop.size) / 2
                 if (read <= 0) continue
-                // Slide the analysis window along by the samples just read.
+                // Slide the analysis window along by the frames just read, mixed to mono.
                 System.arraycopy(frame, read, frame, 0, FFT_SIZE - read)
                 var sumSquares = 0.0
+                val channelSums = DoubleArray(2)
                 for (i in 0 until read) {
-                    val s = hop[i] / 32768f
+                    val l = hop[2 * i] / 32768f
+                    val r = hop[2 * i + 1] / 32768f
+                    val s = (l + r) / 2
                     frame[FFT_SIZE - read + i] = s
                     sumSquares += s * s
+                    channelSums[0] += l * l
+                    channelSums[1] += r * r
                 }
-                val rmsDb = 20f * log10(max(sqrt(sumSquares / read).toFloat(), 1e-5f))
+                val rmsDb = toDb(sumSquares, read)
                 val analysis = analyzer.analyze(frame) ?: continue
                 val bands = analysis.bands
                 AudioLevels.publish(AudioLevels.Snapshot(AudioLevels.Source.Capture, bands, rmsDb,
-                    analysis.bars, SpectrumAnalyzer.scopeTrace(frame)))
+                    analysis.bars, SpectrumAnalyzer.scopeTrace(frame), FloatArray(2) { toDb(channelSums[it], read) }))
 
                 val now = System.currentTimeMillis()
                 if (now - lastLog > 1000) {

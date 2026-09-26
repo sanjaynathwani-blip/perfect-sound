@@ -177,7 +177,7 @@ class PlaybackService : MediaSessionService() {
                 val rmsDb = 20f * log10(maxOf(sqrt(sumSquares / frame.size).toFloat(), 1e-5f))
                 analyzer.analyze(frame)?.let {
                     AudioLevels.publish(AudioLevels.Snapshot(AudioLevels.Source.Local, it.bands, rmsDb,
-                        it.bars, SpectrumAnalyzer.scopeTrace(frame)))
+                        it.bars, SpectrumAnalyzer.scopeTrace(frame), tap.channelDb(playhead.toLong(), rate / 20)))
                 }
                 delay(16)
             }
