@@ -107,7 +107,8 @@ fun LedToggle(label: String, on: Boolean, onClick: () -> Unit, modifier: Modifie
             .clickable(interaction, indication = null, enabled = enabled, onClick = onClick)
             .padding(horizontal = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        // Centred, for when the button is given more width than its label needs.
+        horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally),
     ) {
         if (led) Box(Modifier.size(6.dp).background(if (on) PsColors.Lcd else PsColors.LcdDim, CircleShape))
         BasicText(label, style = LabelStyle.copy(color = if (enabled) PsColors.Text else PsColors.TextDim))

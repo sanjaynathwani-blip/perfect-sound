@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -66,7 +64,6 @@ private val ButtonsHeight = 56.dp
  * Album art with its buttons below, and to its right the track details above the visualizer.
  * Used for every source: local files and the streaming apps in remote mode.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun NowPlayingPanel(
     label: String,
@@ -98,11 +95,12 @@ fun NowPlayingPanel(
             Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(Modifier.width(artSize), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     AlbumArt(info.art, Modifier.size(artSize))
-                    FlowRow(
+                    // Each button is as wide as the art.
+                    Column(
                         Modifier.onSizeChanged { buttonsHeight = with(density) { it.height.toDp() } },
-                        horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        buttons.forEach { LedToggle(it.label, it.on, it.onClick) }
+                        buttons.forEach { LedToggle(it.label, it.on, it.onClick, Modifier.fillMaxWidth()) }
                     }
                 }
                 Column(Modifier.weight(1f).fillMaxHeight()) {
