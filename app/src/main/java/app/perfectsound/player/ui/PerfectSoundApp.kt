@@ -51,8 +51,8 @@ private val WideLayoutMinWidth = 820.dp
 private val StackedMinHeight = 600.dp
 
 /**
- * One window, no floating parts: wide windows put the player and equalizer in a left column with
- * the playlist filling the rest; narrow windows stack all three.
+ * One window, no floating parts: the player on top and the now-playing panel (art, details and
+ * equalizer) below. In local mode, wide windows put the playlist beside them and narrow ones below.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -61,15 +61,13 @@ fun PerfectSoundApp(
     source: Source,
     sources: List<SourceOption>,
     levels: AudioLevels.Snapshot,
-    eq: EqSettings,
-    onEqChange: (EqSettings) -> Unit,
     equalizerVisible: Boolean,
     playlistVisible: Boolean,
-    capturing: Boolean,
-    onToggleCapture: () -> Unit,
     mainActions: MainPanelActions,
-    /** The playlist, or the remote panel in remote mode. */
-    rightPanel: @Composable (Modifier) -> Unit,
+    /** Album art, track details and the equalizer, for whichever source is playing. */
+    nowPlaying: @Composable (Modifier) -> Unit,
+    /** The playlist; null in remote mode, where the streaming app owns the queue. */
+    playlist: (@Composable (Modifier) -> Unit)?,
     /** Files dropped onto the window; returns true if they were accepted. */
     onDrop: (DragEvent) -> Boolean,
 ) {
@@ -126,48 +124,35 @@ fun PerfectSoundApp(
                 if (help) InfoPopup("KEYBOARD SHORTCUTS", SHORTCUT_HELP, IntOffset(40, 40)) { help = false }
             }
         }
-        val equalizer: @Composable (Modifier) -> Unit = {
-            EqPanel(eq, onEqChange, levels, capturing, onToggleCapture, it)
-        }
-        val playlist = rightPanel
+        val showPlaylist = playlist != null && playlistVisible
 
-        if (maxWidth >= WideLayoutMinWidth && playlistVisible) {
+        if (maxWidth >= WideLayoutMinWidth && showPlaylist) {
             Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
                 Column(Modifier.width(MainPanelWidth).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(gap)) {
                     main(Modifier.fillMaxWidth())
-                    if (equalizerVisible) equalizer(Modifier.fillMaxWidth().weight(1f))
-                    else PanelFiller(Modifier.fillMaxWidth().weight(1f))
+                    nowPlaying(Modifier.fillMaxWidth().weight(1f))
                 }
-                playlist(Modifier.weight(1f).fillMaxHeight())
+                playlist!!(Modifier.weight(1f).fillMaxHeight())
             }
-        } else if (maxHeight < StackedMinHeight) {
-            // Too short to share the height sensibly: keep natural panel sizes and scroll.
+        } else if (showPlaylist && maxHeight < StackedMinHeight) {
+            // Too short for the player, now playing and the playlist to share: keep useful sizes and scroll.
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(gap)) {
                 main(Modifier.fillMaxWidth())
-                if (equalizerVisible) equalizer(Modifier.fillMaxWidth().height(220.dp))
-                if (playlistVisible) playlist(Modifier.fillMaxWidth().height(320.dp))
+                nowPlaying(Modifier.fillMaxWidth().height(if (equalizerVisible) 260.dp else 200.dp))
+                playlist!!(Modifier.fillMaxWidth().height(320.dp))
             }
         } else {
+            // The player keeps its natural height and now playing always fills the rest, at any window size.
             Column(verticalArrangement = Arrangement.spacedBy(gap)) {
                 main(Modifier.fillMaxWidth())
-                when {
-                    equalizerVisible && playlistVisible -> {
-                        // Share the remaining height; the equalizer stops growing past a useful size.
-                        equalizer(Modifier.fillMaxWidth().weight(0.45f).heightIn(max = 260.dp))
-                        playlist(Modifier.fillMaxWidth().weight(0.55f))
-                    }
-                    equalizerVisible -> equalizer(Modifier.fillMaxWidth().weight(1f))
-                    playlistVisible -> playlist(Modifier.fillMaxWidth().weight(1f))
-                    else -> PanelFiller(Modifier.fillMaxWidth().weight(1f))
-                }
+                if (showPlaylist) {
+                    // Share the remaining height; now playing stops growing past a useful size.
+                    nowPlaying(Modifier.fillMaxWidth().weight(0.45f).heightIn(max = 300.dp))
+                    playlist!!(Modifier.fillMaxWidth().weight(0.55f))
+                } else nowPlaying(Modifier.fillMaxWidth().weight(1f))
             }
         }
         if (dropping) Box(Modifier.matchParentSize().border(3.dp, PsColors.Lcd))
     }
 }
 
-/** Plain panel surface so hidden panels never leave a black hole in the window. */
-@Composable
-private fun PanelFiller(modifier: Modifier) {
-    androidx.compose.foundation.layout.Box(modifier.background(PsColors.Panel))
-}

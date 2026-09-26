@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Playback capture (EQ levels for Spotify / YouTube Music): Android requires RECORD_AUDIO
+    <!-- Playback capture (EQ levels for Spotify / Chrome): Android requires RECORD_AUDIO
          for AudioPlaybackCapture, plus a mediaProjection foreground service. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -13,7 +13,7 @@
     <!-- Remote mode: see whether the streaming apps are installed and open them. -->
     <queries>
         <package android:name="com.spotify.music" />
-        <package android:name="com.google.android.apps.youtube.music" />
+        <package android:name="com.android.chrome" />
     </queries>
 
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />

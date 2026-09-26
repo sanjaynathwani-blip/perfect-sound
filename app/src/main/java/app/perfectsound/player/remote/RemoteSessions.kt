@@ -23,14 +23,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Remote mode: follows the media sessions of streaming apps (Spotify, YouTube Music) and forwards
+ * Remote mode: follows the media sessions of streaming apps (Spotify, and whatever Chrome plays) and forwards
  * transport commands to them. The audio stays in those apps; we only show and control it.
  */
 class RemoteSessions(private val context: Context) {
 
     enum class App(val packageName: String, val label: String) {
         Spotify("com.spotify.music", "Spotify"),
-        YouTubeMusic("com.google.android.apps.youtube.music", "YouTube Music"),
+        /** Whatever a Chrome tab is playing (YouTube Music on the web, YouTube, SoundCloud…). */
+        Chrome("com.android.chrome", "Chrome"),
     }
 
     data class NowPlaying(

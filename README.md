@@ -18,8 +18,9 @@ your browser or Files app the first time.
 
 - **Local playback**: play your own files, gapless, with a background media notification,
   lock-screen and media-key controls, and resume where you left off.
-- **Remote mode**: show and control what **Spotify** or **YouTube Music** is playing: title, artist,
-  album art, position, play/pause/skip/seek, shuffle and repeat. The audio stays in those apps.
+- **Remote mode**: show and control what **Spotify** or **Chrome** (for example YouTube Music on
+  the web) is playing: title, artist, album art, position, play/pause/skip/seek, plus shuffle and
+  repeat for Spotify. The audio stays in those apps.
 - **Bouncing equalizer**: live levels for the ten classic bands (60 Hz – 16 kHz). For your own
   files this needs no permissions. For streaming apps, turn on **EQ LEVELS** (Android asks to
   capture audio each session).
@@ -46,7 +47,7 @@ Coming in Phase 2: a working 10-band equalizer with preamp and presets, and a vi
 
 | Permission | Why |
 | --- | --- |
-| Notification access (optional) | Required by Android to see and control Spotify / YouTube Music |
+| Notification access (optional) | Required by Android to see and control Spotify / Chrome |
 | Microphone + screen-capture prompt (optional) | Required by Android to read other apps' audio for the EQ levels. Only other apps' media playback is captured, never the mic |
 | Notifications | Media controls while playing in the background |
 

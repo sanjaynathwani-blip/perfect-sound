@@ -2,6 +2,7 @@ package app.perfectsound.player.playback
 
 import android.content.ComponentName
 import android.content.Context
+import android.net.Uri
 import androidx.core.content.ContextCompat
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -21,7 +22,14 @@ import kotlinx.coroutines.launch
 /** UI-side handle on [PlaybackService]: exposes player state as a flow and forwards commands. */
 class PlayerConnection(private val context: Context, private val scope: CoroutineScope) {
 
-    data class Track(val id: String, val title: String, val artist: String?, val durationMs: Long) {
+    data class Track(
+        val id: String,
+        val title: String,
+        val artist: String?,
+        val durationMs: Long,
+        val album: String? = null,
+        val uri: Uri? = null,
+    ) {
         val displayName: String get() = if (artist.isNullOrBlank()) title else "$artist - $title"
     }
 
@@ -184,5 +192,7 @@ class PlayerConnection(private val context: Context, private val scope: Coroutin
         title = mediaMetadata.title?.toString() ?: requestMetadata.mediaUri?.lastPathSegment ?: "Unknown",
         artist = mediaMetadata.artist?.toString(),
         durationMs = mediaMetadata.durationMs ?: 0,
+        album = mediaMetadata.albumTitle?.toString()?.takeIf { it.isNotBlank() },
+        uri = requestMetadata.mediaUri,
     )
 }

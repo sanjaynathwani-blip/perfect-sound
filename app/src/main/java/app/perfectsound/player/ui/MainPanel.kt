@@ -186,7 +186,8 @@ fun MainPanel(
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                         LedToggle("EQ", equalizerVisible, actions::toggleEqualizer)
-                        LedToggle("PL", playlistVisible, actions::togglePlaylist)
+                        // Remote mode has no playlist: the streaming app owns the queue.
+                        LedToggle("PL", playlistVisible && source == Source.Local, actions::togglePlaylist, enabled = source == Source.Local)
                     }
                 }
             }

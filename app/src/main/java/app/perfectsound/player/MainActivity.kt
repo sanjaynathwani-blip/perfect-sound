@@ -13,13 +13,17 @@ import android.view.DragEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -27,14 +31,18 @@ import androidx.media3.common.MediaItem
 import app.perfectsound.player.audio.AudioLevels
 import app.perfectsound.player.capture.PlaybackCaptureService
 import app.perfectsound.player.library.TrackImporter
+import app.perfectsound.player.library.loadEmbeddedArt
 import app.perfectsound.player.playback.PlayerConnection
 import app.perfectsound.player.remote.RemoteSessions
 import app.perfectsound.player.ui.EqSettings
 import app.perfectsound.player.ui.MainPanelActions
+import app.perfectsound.player.ui.NowPlayingInfo
+import app.perfectsound.player.ui.NowPlayingPanel
+import app.perfectsound.player.ui.PanelButton
+import app.perfectsound.player.ui.PanelMessage
 import app.perfectsound.player.ui.PerfectSoundApp
 import app.perfectsound.player.ui.PlaylistActions
 import app.perfectsound.player.ui.PlaylistPanel
-import app.perfectsound.player.ui.RemotePanel
 import app.perfectsound.player.ui.Source
 import app.perfectsound.player.ui.SourceOption
 import app.perfectsound.player.ui.UiPrefs
@@ -108,7 +116,7 @@ class MainActivity : ComponentActivity() {
             }
             val sources = listOf(SourceOption(Source.Local, "LOCAL", true)) +
                 RemoteSessions.App.entries.map { app ->
-                    SourceOption(Source.Remote(app), if (app == RemoteSessions.App.YouTubeMusic) "YT MUSIC" else app.label.uppercase(),
+                    SourceOption(Source.Remote(app), app.label.uppercase(),
                         available = app in remoteState.installed)
                 }
             val toggleCapture = { if (capturing) PlaybackCaptureService.stop(this) else startCapture() }
@@ -118,12 +126,8 @@ class MainActivity : ComponentActivity() {
                 source = currentSource,
                 sources = sources,
                 levels = levels,
-                eq = eqSettings,
-                onEqChange = { eq.value = it; prefs.eq = it },
                 equalizerVisible = equalizerVisible,
                 playlistVisible = playlistVisible,
-                capturing = capturing,
-                onToggleCapture = toggleCapture,
                 mainActions = object : MainPanelActions {
                     override fun play() = route({ player.play() }) { remote.play(it) }
                     override fun pause() = route({ player.pause() }) { remote.togglePause(it) }
@@ -148,21 +152,98 @@ class MainActivity : ComponentActivity() {
                     override fun changeVolume(delta: Float) = setVolume(display.volume + delta)
                     override fun addFolder() = pickFolder.launch(null)
                 },
-                rightPanel = { modifier ->
-                    when (val s = currentSource) {
-                        Source.Local -> PlaylistPanel(local, playlistActions, modifier)
-                        is Source.Remote -> RemotePanel(
-                            app = s.app,
-                            remote = remoteState,
-                            capturing = capturing,
-                            onGrantAccess = { startActivity(remote.accessSettingsIntent()) },
-                            onOpenApp = { remote.launch(s.app) },
-                            onToggleCapture = toggleCapture,
-                            modifier = modifier,
-                        )
+                nowPlaying = { modifier ->
+                    val panel = when (val s = currentSource) {
+                        Source.Local -> localNowPlaying(local)
+                        is Source.Remote -> remoteNowPlaying(s.app, remoteState, capturing, toggleCapture)
                     }
+                    NowPlayingPanel(
+                        label = panel.label,
+                        info = panel.info,
+                        message = panel.message,
+                        buttons = panel.buttons,
+                        hint = panel.hint,
+                        equalizerVisible = equalizerVisible,
+                        eq = eqSettings,
+                        onEqChange = { eq.value = it; prefs.eq = it },
+                        levels = levels,
+                        modifier = modifier,
+                    )
                 },
+                playlist = if (currentSource == Source.Local) { modifier -> PlaylistPanel(local, playlistActions, modifier) } else null,
                 onDrop = ::onFilesDropped,
+            )
+        }
+    }
+
+    /** What the now-playing panel shows for one source. */
+    private class NowPlayingContent(
+        val label: String,
+        val info: NowPlayingInfo,
+        val message: PanelMessage? = null,
+        val buttons: List<PanelButton> = emptyList(),
+        val hint: String? = null,
+    )
+
+    @Composable
+    private fun localNowPlaying(state: PlayerConnection.State): NowPlayingContent {
+        val track = state.currentTrack
+        val art by produceState<ImageBitmap?>(null, track?.uri) {
+            value = track?.uri?.let { loadEmbeddedArt(applicationContext, it)?.asImageBitmap() }
+        }
+        val buttons = listOf(
+            PanelButton("OPEN FILES") { openFiles(replace = true) },
+            PanelButton("ADD FOLDER") { pickFolder.launch(null) },
+        )
+        return if (track == null) NowPlayingContent(
+            label = "NOW PLAYING",
+            info = NowPlayingInfo(),
+            message = PanelMessage("Nothing playing", "Open some music files, add a folder, or drop files onto the window."),
+            buttons = buttons,
+        ) else NowPlayingContent(
+            label = "NOW PLAYING",
+            info = NowPlayingInfo(track.title, track.artist, track.album, art),
+            buttons = buttons,
+        )
+    }
+
+    @Composable
+    private fun remoteNowPlaying(
+        app: RemoteSessions.App,
+        state: RemoteSessions.State,
+        capturing: Boolean,
+        toggleCapture: () -> Unit,
+    ): NowPlayingContent {
+        val np = state.nowPlaying[app]
+        val art = remember(np?.art) { np?.art?.asImageBitmap() }
+        val name = app.label.uppercase()
+        val buttons = listOf(
+            PanelButton("OPEN $name") { remote.launch(app) },
+            PanelButton("EQ LEVELS", on = capturing, onClick = toggleCapture),
+        )
+        return when {
+            !state.hasAccess -> NowPlayingContent(
+                label = name,
+                info = NowPlayingInfo(),
+                message = PanelMessage(
+                    "Allow Perfect Sound to see what's playing",
+                    "To show and control ${app.label}, Android needs you to turn on notification access " +
+                        "for Perfect Sound. It's only used to read and control media playback.",
+                    "GRANT ACCESS",
+                ) { startActivity(remote.accessSettingsIntent()) },
+                buttons = buttons.take(1),
+            )
+            np?.title == null -> NowPlayingContent(
+                label = name,
+                info = NowPlayingInfo(),
+                message = PanelMessage("Nothing playing in ${app.label}", "Start something in ${app.label}, then control it from here."),
+                buttons = buttons,
+            )
+            else -> NowPlayingContent(
+                label = name,
+                info = NowPlayingInfo(np.title, np.artist, np.album, art),
+                buttons = buttons,
+                hint = if (capturing) null else "Turn on EQ LEVELS to make the equalizer bounce to ${app.label}. Android will ask to capture audio each time.",
             )
         }
     }

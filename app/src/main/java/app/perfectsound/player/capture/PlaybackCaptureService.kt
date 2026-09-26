@@ -29,7 +29,7 @@ import kotlin.math.max
 import kotlin.math.sqrt
 
 /**
- * Captures what other apps (Spotify, YouTube Music, ...) are playing via AudioPlaybackCapture and
+ * Captures what other apps (Spotify, Chrome, ...) are playing via AudioPlaybackCapture and
  * publishes equalizer band levels. Apps can opt out of capture, in which case we only read silence.
  */
 class PlaybackCaptureService : Service() {
