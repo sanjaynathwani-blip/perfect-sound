@@ -3,12 +3,14 @@ package app.perfectsound.player.remote
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInstaller
 import android.graphics.Bitmap
 import android.media.AudioManager
 import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
+import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -66,6 +68,11 @@ class RemoteSessions(private val context: Context) {
 
     data class State(
         val hasAccess: Boolean = false,
+        /**
+         * Installed from a downloaded APK, so Android may grey out notification access as a
+         * "Restricted setting" until the user allows it in Perfect Sound's App info.
+         */
+        val accessRestricted: Boolean = false,
         /** Apps with an active media session right now. */
         val active: Set<App> = emptySet(),
         val installed: Set<App> = emptySet(),
@@ -97,12 +104,27 @@ class RemoteSessions(private val context: Context) {
                 .putExtra(Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME, listenerComponent.flattenToString())
         else Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
 
+    /** Opens Perfect Sound's App info, whose ⋮ menu has "Allow restricted settings". */
+    fun appInfoIntent(): Intent =
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
+
+    /**
+     * Android 13+ restricts notification access for apps installed from an APK file (a Chrome download
+     * or the Files app), but not for store or adb installs. Apps can't tell whether the user has since
+     * allowed it, so this only means the switch may be greyed out.
+     */
+    private fun isAccessRestricted(): Boolean {
+        if (Build.VERSION.SDK_INT < 33) return false
+        val source = runCatching { context.packageManager.getInstallSourceInfo(context.packageName).packageSource }.getOrNull()
+        return source == PackageInstaller.PACKAGE_SOURCE_DOWNLOADED_FILE || source == PackageInstaller.PACKAGE_SOURCE_LOCAL_FILE
+    }
+
     /** Call when the UI becomes visible (access may have been granted meanwhile). */
     fun start() {
         val installed = App.entries.filter { isInstalled(it.packageName) }.toSet()
         if (!hasAccess()) {
             stop()
-            _state.value = State(hasAccess = false, installed = installed)
+            _state.value = State(hasAccess = false, accessRestricted = isAccessRestricted(), installed = installed)
             return
         }
         _state.value = _state.value.copy(hasAccess = true, installed = installed)
@@ -112,7 +134,7 @@ class RemoteSessions(private val context: Context) {
             update(manager.getActiveSessions(listenerComponent))
             started = true
         } catch (_: SecurityException) {
-            _state.value = State(hasAccess = false, installed = installed)
+            _state.value = State(hasAccess = false, accessRestricted = isAccessRestricted(), installed = installed)
         }
     }
 

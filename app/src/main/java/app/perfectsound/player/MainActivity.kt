@@ -241,9 +241,17 @@ class MainActivity : ComponentActivity() {
                 message = PanelMessage(
                     "Allow Perfect Sound to see what's playing",
                     "To show and control ${app.label}, Android needs you to turn on notification access " +
-                        "for Perfect Sound. It's only used to read and control media playback.",
-                    "GRANT ACCESS",
-                ) { startActivity(remote.accessSettingsIntent()) },
+                        "for Perfect Sound. It's only used to read and control media playback." +
+                        // Android's own steps for lifting the restriction; an app can't lift it itself.
+                        (if (!state.accessRestricted) "" else "\n\nIs the switch greyed out? Android restricts " +
+                            "apps installed from a download:\n1. Click the switch, then OK.\n" +
+                            "2. Click APP INFO, open ⋮ at the top right and choose Allow restricted settings.\n" +
+                            "3. Click GRANT ACCESS again and turn it on."),
+                    listOfNotNull(
+                        PanelButton("GRANT ACCESS") { startActivity(remote.accessSettingsIntent()) },
+                        if (state.accessRestricted) PanelButton("APP INFO") { startActivity(remote.appInfoIntent()) } else null,
+                    ),
+                ),
                 buttons = buttons,
                 eqOn = capturing,
                 onEqToggle = toggleCapture,

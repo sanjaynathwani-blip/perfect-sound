@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- **Spotify and Chrome work when Perfect Sound is installed from a download.** Android greys
+  out notification access as a restricted setting for downloaded apps, so remote mode couldn't
+  be turned on. Perfect Sound now shows Android's steps to allow it, with an **APP INFO** button.
+
 ## 0.4.0 (2026-09-29)
 
 - **A tidier player:** the SOURCE buttons (LOCAL, SPOTIFY, CHROME) move to the end of the
