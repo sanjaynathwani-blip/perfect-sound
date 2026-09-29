@@ -52,9 +52,9 @@ data class NowPlayingInfo(
 )
 
 /** Shown in place of the track details, e.g. when Android access is missing or nothing is playing. */
-data class PanelMessage(val title: String, val body: String, val button: String? = null, val onButton: () -> Unit = {})
+data class PanelMessage(val title: String, val body: String, val buttons: List<PanelButton> = emptyList())
 
-/** A button under the album art. */
+/** A button under the album art, or under a [PanelMessage]. */
 data class PanelButton(val label: String, val on: Boolean = false, val onClick: () -> Unit)
 
 /** Room under the art for its buttons until they have been measured. */
@@ -141,6 +141,8 @@ private fun Message(message: PanelMessage) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         BasicText(message.title, style = LcdTextStyle.copy(color = PsColors.Current, fontSize = 15.sp))
         BasicText(message.body, style = LcdTextStyle.copy(color = PsColors.TextDim, fontSize = 12.sp))
-        message.button?.let { LedToggle(it, false, message.onButton, Modifier.padding(top = 2.dp)) }
+        if (message.buttons.isNotEmpty()) Row(Modifier.padding(top = 2.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            message.buttons.forEach { LedToggle(it.label, it.on, it.onClick) }
+        }
     }
 }

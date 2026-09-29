@@ -73,6 +73,12 @@ so you can start something, then shows and controls it: play, pause, skip, seek,
 shuffle and repeat where Spotify allows them. The audio stays in Spotify or Chrome; Chrome covers
 anything a tab plays, such as YouTube Music on the web.
 
+The first time, Perfect Sound asks you to turn on **notification access**, Android's way of
+letting an app see and control what other apps are playing. Because Perfect Sound is installed
+from a download, Android may grey that switch out as a **restricted setting**. If it does, click
+the switch and **OK**, then click **APP INFO** in Perfect Sound, open **⋮** at the top right and
+choose **Allow restricted settings**. After that, **GRANT ACCESS** turns on as usual.
+
 To make the visualizer bounce to them, press **ON**: Android asks to share an app's audio each
 time, and Perfect Sound only ever captures other apps' media playback, never the microphone.
 
