@@ -89,14 +89,15 @@ fun NowPlayingPanel(
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(10.dp)) {
             val density = LocalDensity.current
             var buttonsHeight by remember { mutableStateOf(ButtonsHeight) }
+            val belowArt = if (buttons.isEmpty()) 0.dp else buttonsHeight + 8.dp
             // The art takes the height left over by its buttons, but leaves most of the width to the EQ.
-            val artSize = minOf(maxHeight - buttonsHeight - 8.dp, maxWidth * 0.4f, 320.dp).coerceAtLeast(56.dp)
+            val artSize = minOf(maxHeight - belowArt, maxWidth * 0.4f, 320.dp).coerceAtLeast(56.dp)
             // The row is as tall as the art and its buttons, so the visualizer ends level with them.
             Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(Modifier.width(artSize), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     AlbumArt(info.art, Modifier.size(artSize))
                     // Each button is as wide as the art.
-                    Column(
+                    if (buttons.isNotEmpty()) Column(
                         Modifier.onSizeChanged { buttonsHeight = with(density) { it.height.toDp() } },
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {

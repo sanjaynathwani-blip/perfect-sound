@@ -146,7 +146,12 @@ class MainActivity : ComponentActivity() {
                     override fun cycleRepeat() = route({ player.cycleRepeat() }) { remote.cycleRepeat(it) }
                     override fun toggleEqualizer() { equalizerVisible = !equalizerVisible; prefs.equalizerVisible = equalizerVisible }
                     override fun togglePlaylist() { playlistVisible = !playlistVisible; prefs.playlistVisible = playlistVisible }
-                    override fun selectSource(source: Source) = switchSource(source)
+                    // Picking a streaming app also brings it up, so there's something to play.
+                    // Clicking it again while selected brings it back to the front.
+                    override fun selectSource(source: Source) {
+                        switchSource(source)
+                        if (source is Source.Remote) remote.launch(source.app)
+                    }
                     override fun seekBy(deltaMs: Long) = route({ player.seekBy(deltaMs) }) { app ->
                         val np = remote.state.value.nowPlaying[app]
                         if (np?.canSeek == true) remote.seekTo(app, (np.positionAt() + deltaMs).coerceAtLeast(0))
@@ -228,7 +233,7 @@ class MainActivity : ComponentActivity() {
         val np = state.nowPlaying[app]
         val art = remember(np?.art) { np?.art?.asImageBitmap() }
         val name = app.label.uppercase()
-        val buttons = listOf(PanelButton("OPEN $name") { remote.launch(app) })
+        val buttons = emptyList<PanelButton>()
         return when {
             !state.hasAccess -> NowPlayingContent(
                 label = name,
@@ -246,7 +251,10 @@ class MainActivity : ComponentActivity() {
             np?.title == null -> NowPlayingContent(
                 label = name,
                 info = NowPlayingInfo(),
-                message = PanelMessage("Nothing playing in ${app.label}", "Start something in ${app.label}, then control it from here."),
+                message = PanelMessage(
+                    "Nothing playing in ${app.label}",
+                    "Start something in ${app.label}, then control it from here. Click ${name} above to bring ${app.label} up.",
+                ),
                 buttons = buttons,
                 eqOn = capturing,
                 onEqToggle = toggleCapture,
