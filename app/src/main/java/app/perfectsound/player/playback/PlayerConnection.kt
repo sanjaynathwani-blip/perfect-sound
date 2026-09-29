@@ -3,6 +3,7 @@ package app.perfectsound.player.playback
 import android.content.ComponentName
 import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.core.content.ContextCompat
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -180,11 +181,29 @@ class PlayerConnection(private val context: Context, private val scope: Coroutin
             bitrateKbps = format?.let { f ->
                 (if (f.bitrate != androidx.media3.common.Format.NO_VALUE) f.bitrate else f.averageBitrate)
                     .takeIf { it > 0 }?.let { it / 1000 }
-            },
+            } ?: format?.let { averageKbps(playlist.getOrNull(c.currentMediaItemIndex)?.uri, c.duration) },
             sampleRateHz = format?.sampleRate?.takeIf { it > 0 },
             channels = format?.channelCount?.takeIf { it > 0 },
             error = error,
         )
+    }
+
+    private val fileSizes = mutableMapOf<Uri, Long?>()
+
+    /**
+     * The average bitrate from the file's size and length, for formats that don't state one
+     * (FLAC, WAV), like the classic desktop players show.
+     */
+    private fun averageKbps(uri: Uri?, durationMs: Long): Int? {
+        if (uri == null || durationMs <= 0 || durationMs == C.TIME_UNSET) return null
+        val size = fileSizes.getOrPut(uri) {
+            runCatching {
+                context.contentResolver.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)?.use {
+                    if (it.moveToFirst() && !it.isNull(0)) it.getLong(0) else null
+                }
+            }.getOrNull()
+        } ?: return null
+        return (size * 8 / durationMs).toInt().takeIf { it > 0 }
     }
 
     private fun MediaItem.toTrack() = Track(
