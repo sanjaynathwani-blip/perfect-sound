@@ -93,9 +93,17 @@ fun IconButton(
     }
 }
 
-/** Small text button with an LED that lights when [on]. */
+/** Small text button with an LED that lights when [on], and an optional little [icon] before the label. */
 @Composable
-fun LedToggle(label: String, on: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, led: Boolean = true) {
+fun LedToggle(
+    label: String,
+    on: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    led: Boolean = true,
+    icon: (DrawScope.(Color) -> Unit)? = null,
+) {
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
     Row(
@@ -111,6 +119,9 @@ fun LedToggle(label: String, on: Boolean, onClick: () -> Unit, modifier: Modifie
         horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally),
     ) {
         if (led) Box(Modifier.size(6.dp).background(if (on) PsColors.Lcd else PsColors.LcdDim, CircleShape))
+        if (icon != null) Canvas(Modifier.size(11.dp)) {
+            icon(if (!enabled) PsColors.TextDim else if (on) PsColors.Lcd else PsColors.Text)
+        }
         BasicText(label, style = LabelStyle.copy(color = if (enabled) PsColors.Text else PsColors.TextDim))
     }
 }

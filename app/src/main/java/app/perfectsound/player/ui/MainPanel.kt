@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.perfectsound.player.remote.RemoteSessions
 import app.perfectsound.player.ui.components.HSlider
 import app.perfectsound.player.ui.components.IconButton
 import app.perfectsound.player.ui.components.Icons
@@ -141,7 +142,7 @@ fun MainPanel(
                             value = state.volume,
                             onChange = actions::setVolume,
                             fill = Brush.horizontalGradient(listOf(PsColors.LcdMid, PsColors.Amber)),
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.width(140.dp),
                         )
                     }
                 }
@@ -159,14 +160,6 @@ fun MainPanel(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            // Source: the built-in player, or remote control of a streaming app
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                BasicText("SOURCE", style = LabelStyle, modifier = Modifier.padding(end = 4.dp))
-                sources.forEach { option ->
-                    LedToggle(option.label, option.source == source, { actions.selectSource(option.source) }, enabled = option.available)
-                }
-            }
-
             // Transport
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                 IconButton(actions::previous, icon = Icons.Previous)
@@ -176,8 +169,25 @@ fun MainPanel(
                 IconButton(actions::next, icon = Icons.Next)
                 Spacer(Modifier.width(6.dp))
                 IconButton(actions::open, width = 34.dp, icon = Icons.Eject)
+                Spacer(Modifier.weight(1f))
+                // Source: the built-in player, or remote control of a streaming app
+                BasicText("SOURCE", style = LabelStyle, modifier = Modifier.padding(end = 4.dp))
+                sources.forEach { option ->
+                    LedToggle(
+                        option.label, option.source == source, { actions.selectSource(option.source) },
+                        enabled = option.available, icon = sourceIcon(option.source),
+                    )
+                }
             }
         }
+    }
+}
+
+private fun sourceIcon(source: Source) = when (source) {
+    Source.Local -> Icons.Note
+    is Source.Remote -> when (source.app) {
+        RemoteSessions.App.Spotify -> Icons.Waves
+        RemoteSessions.App.Chrome -> Icons.Globe
     }
 }
 
