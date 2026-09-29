@@ -122,7 +122,7 @@ fun LedToggle(
         if (icon != null) Canvas(Modifier.size(11.dp)) {
             icon(if (!enabled) PsColors.TextDim else if (on) PsColors.Lcd else PsColors.Text)
         }
-        BasicText(label, style = LabelStyle.copy(color = if (enabled) PsColors.Text else PsColors.TextDim))
+        if (label.isNotEmpty()) BasicText(label, style = LabelStyle.copy(color = if (enabled) PsColors.Text else PsColors.TextDim))
     }
 }
 

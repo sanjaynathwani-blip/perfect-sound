@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -160,23 +161,27 @@ fun MainPanel(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            // Transport
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                IconButton(actions::previous, icon = Icons.Previous)
-                IconButton(actions::play, icon = Icons.Play)
-                IconButton(actions::pause, icon = Icons.Pause)
-                IconButton(actions::stop, icon = Icons.Stop)
-                IconButton(actions::next, icon = Icons.Next)
-                Spacer(Modifier.width(6.dp))
-                IconButton(actions::open, width = 34.dp, icon = Icons.Eject)
-                Spacer(Modifier.weight(1f))
-                // Source: the built-in player, or remote control of a streaming app
-                BasicText("SOURCE", style = LabelStyle, modifier = Modifier.padding(end = 4.dp))
-                sources.forEach { option ->
-                    LedToggle(
-                        option.label, option.source == source, { actions.selectSource(option.source) },
-                        enabled = option.available, icon = sourceIcon(option.source),
-                    )
+            // Transport, and the source at the right end: just icons when the panel is narrow
+            // (beside the playlist in a wide window).
+            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                val compact = maxWidth < 560.dp
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    IconButton(actions::previous, icon = Icons.Previous)
+                    IconButton(actions::play, icon = Icons.Play)
+                    IconButton(actions::pause, icon = Icons.Pause)
+                    IconButton(actions::stop, icon = Icons.Stop)
+                    IconButton(actions::next, icon = Icons.Next)
+                    Spacer(Modifier.width(6.dp))
+                    IconButton(actions::open, width = 34.dp, icon = Icons.Eject)
+                    Spacer(Modifier.weight(1f))
+                    // Source: the built-in player, or remote control of a streaming app
+                    if (!compact) BasicText("SOURCE", style = LabelStyle, modifier = Modifier.padding(end = 4.dp))
+                    sources.forEach { option ->
+                        LedToggle(
+                            if (compact) "" else option.label, option.source == source, { actions.selectSource(option.source) },
+                            enabled = option.available, icon = sourceIcon(option.source),
+                        )
+                    }
                 }
             }
         }
