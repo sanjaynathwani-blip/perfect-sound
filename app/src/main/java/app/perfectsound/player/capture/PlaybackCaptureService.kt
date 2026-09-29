@@ -136,7 +136,7 @@ class PlaybackCaptureService : Service() {
         nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, getString(R.string.capture_channel_name),
             NotificationManager.IMPORTANCE_LOW))
         return Notification.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher)
+            .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setContentTitle(getString(R.string.capture_notification_title))
             .setContentText(getString(R.string.capture_notification_text))
             .setOngoing(true)

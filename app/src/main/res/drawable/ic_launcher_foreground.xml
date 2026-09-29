@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher foreground: level bars with peak caps on a dark LCD panel (brand/perfect-sound-logo.svg). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#FF070C09" android:pathData="M36.62,31h34.76a5.62,5.62 0,0 1,5.62,5.62v34.76a5.62,5.62 0,0 1,-5.62,5.62h-34.76a5.62,5.62 0,0 1,-5.62,-5.62v-34.76a5.62,5.62 0,0 1,5.62,-5.62z" />
+    <path android:pathData="M39.31,56.56h4.08a0.77,0.77 0,0 1,0.77,0.77v13.79a0.77,0.77 0,0 1,-0.77,0.77h-4.08a0.77,0.77 0,0 1,-0.77,-0.77v-13.79a0.77,0.77 0,0 1,0.77,-0.77zM47.74,45.57h4.08a0.77,0.77 0,0 1,0.77,0.77v24.78a0.77,0.77 0,0 1,-0.77,0.77h-4.08a0.77,0.77 0,0 1,-0.77,-0.77v-24.78a0.77,0.77 0,0 1,0.77,-0.77zM56.18,38.41h4.08a0.77,0.77 0,0 1,0.77,0.77v31.94a0.77,0.77 0,0 1,-0.77,0.77h-4.08a0.77,0.77 0,0 1,-0.77,-0.77v-31.94a0.77,0.77 0,0 1,0.77,-0.77zM64.61,50.17h4.08a0.77,0.77 0,0 1,0.77,0.77v20.18a0.77,0.77 0,0 1,-0.77,0.77h-4.08a0.77,0.77 0,0 1,-0.77,-0.77v-20.18a0.77,0.77 0,0 1,0.77,-0.77z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="71.89" android:endX="0" android:endY="38.41">
+                <item android:offset="0" android:color="#FF1FAE4B" />
+                <item android:offset="0.7" android:color="#FF39FF6A" />
+                <item android:offset="1" android:color="#FFB8FF5A" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:fillColor="#FFFFC640" android:pathData="M39.05,53.23h4.60a0.51,0.51 0,0 1,0.51,0.51v0.51a0.51,0.51 0,0 1,-0.51,0.51h-4.60a0.51,0.51 0,0 1,-0.51,-0.51v-0.51a0.51,0.51 0,0 1,0.51,-0.51zM47.48,42.24h4.60a0.51,0.51 0,0 1,0.51,0.51v0.51a0.51,0.51 0,0 1,-0.51,0.51h-4.60a0.51,0.51 0,0 1,-0.51,-0.51v-0.51a0.51,0.51 0,0 1,0.51,-0.51zM55.919999999999995,35.09h4.60a0.51,0.51 0,0 1,0.51,0.51v0.51a0.51,0.51 0,0 1,-0.51,0.51h-4.60a0.51,0.51 0,0 1,-0.51,-0.51v-0.51a0.51,0.51 0,0 1,0.51,-0.51zM64.35000000000001,46.84h4.60a0.51,0.51 0,0 1,0.51,0.51v0.51a0.51,0.51 0,0 1,-0.51,0.51h-4.60a0.51,0.51 0,0 1,-0.51,-0.51v-0.51a0.51,0.51 0,0 1,0.51,-0.51z" />
+</vector>
