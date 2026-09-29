@@ -46,6 +46,6 @@ val SHORTCUT_HELP = listOf(
     "↑ / ↓" to "Volume (or move selection in the playlist)",
     "L / Shift+L" to "Open files / Add folder",
     "S / R" to "Shuffle / Repeat",
-    "Alt+G / Alt+E" to "Show equalizer / playlist",
+    "Alt+G / Alt+E" to "Show visualizer / playlist",
     "Enter / Delete / Ctrl+A" to "Play / Remove / Select all (playlist)",
 )

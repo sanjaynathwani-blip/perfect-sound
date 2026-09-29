@@ -113,7 +113,7 @@ fun PerfectSoundApp(
                             MenuItem("Add folder…    Shift+L", onClick = mainActions::addFolder),
                             MenuItem((if (display.shuffle && display.canShuffle) "✓ " else "") + "Shuffle    S", enabled = display.canShuffle, onClick = mainActions::toggleShuffle),
                             MenuItem((if (display.repeat != Repeat.Off && display.canRepeat) "✓ " else "") + "Repeat    R", enabled = display.canRepeat, onClick = mainActions::cycleRepeat),
-                            MenuItem((if (equalizerVisible) "✓ " else "") + "Equalizer    Alt+G", onClick = mainActions::toggleEqualizer),
+                            MenuItem((if (equalizerVisible) "✓ " else "") + "Visualizer    Alt+G", onClick = mainActions::toggleEqualizer),
                             MenuItem((if (playlistVisible) "✓ " else "") + "Playlist    Alt+E", onClick = mainActions::togglePlaylist),
                             MenuItem("Keyboard shortcuts…") { help = true },
                         ),
