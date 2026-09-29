@@ -304,6 +304,15 @@ class MainActivity : ComponentActivity() {
         remote.start() // re-checks notification access, which may have just been granted
     }
 
+    /**
+     * On a desktop our window stays visible beside Settings, so onStart doesn't run again after
+     * access is granted there: check again when the user comes back to the window.
+     */
+    override fun onTopResumedActivityChanged(isTopResumedActivity: Boolean) {
+        super.onTopResumedActivityChanged(isTopResumedActivity)
+        if (isTopResumedActivity) remote.start()
+    }
+
     override fun onStop() {
         remote.stop()
         super.onStop()

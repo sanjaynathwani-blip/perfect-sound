@@ -119,7 +119,7 @@ class RemoteSessions(private val context: Context) {
         return source == PackageInstaller.PACKAGE_SOURCE_DOWNLOADED_FILE || source == PackageInstaller.PACKAGE_SOURCE_LOCAL_FILE
     }
 
-    /** Call when the UI becomes visible (access may have been granted meanwhile). */
+    /** Call when the UI becomes visible or regains focus (access may have been granted meanwhile). */
     fun start() {
         val installed = App.entries.filter { isInstalled(it.packageName) }.toSet()
         if (!hasAccess()) {
