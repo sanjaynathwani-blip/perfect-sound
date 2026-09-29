@@ -160,7 +160,8 @@ API; the remote visualizer uses `AudioPlaybackCapture`. The app lives in [`app/`
 ```
 
 It needs JDK 17 and the Android SDK (platform 35). The debug build installs next to the release
-one, as **Perfect Sound Dev**.
+one, as **Perfect Sound Dev**. A [GitHub Actions workflow](.github/workflows/build.yml) builds it
+and runs the unit tests on every push and pull request.
 
 Releases are checked on a device the way users install them; see [RELEASING.md](RELEASING.md).
 
