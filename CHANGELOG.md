@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **Targets Android 16 (API 36),** which Google Play requires of new apps, ready for testing
+  through Play.
+
 ## 0.4.1 (2026-09-29)
 
 - **Spotify and Chrome work when Perfect Sound is installed from a download.** Android greys

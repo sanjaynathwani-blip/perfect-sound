@@ -8,14 +8,14 @@ plugins {
 
 android {
     namespace = "app.perfectsound.player"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "app.perfectsound.player"
         minSdk = 29 // audio playback capture needs Android 10
-        targetSdk = 35
-        versionCode = 7
-        versionName = "0.4.1"
+        targetSdk = 36
+        versionCode = 8
+        versionName = "0.4.2"
     }
 
     // The release key lives outside the repo; without it, release builds are left unsigned.

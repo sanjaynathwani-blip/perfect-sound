@@ -62,3 +62,7 @@ gh release edit vX.Y.Z --prerelease=false --latest
 
 If a step in the check fails, fix it, bump the version again and start over; don't replace a
 published APK.
+
+## 6. Google Play
+
+Upload the same version to Play's internal test as a bundle; see [PLAY.md](PLAY.md).
