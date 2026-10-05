@@ -7,7 +7,8 @@
 <p align="center">
   <b>A music player for Googlebooks in the spirit of the classic '90s desktop players.</b><br>
   A seven-segment clock, a scrolling title, a live visualizer and a proper playlist, drawn crisp at
-  any size. It plays your own files, and it can follow and control Spotify or a Chrome tab.
+  any size. It plays your own files, and it can follow and control Spotify, YouTube Music or any
+  Chrome tab.
 </p>
 
 <p align="center">
@@ -27,10 +28,10 @@
 </p>
 
 <p align="center"><sub>A personal passion project by <a href="https://github.com/sanjaynathwani-blip">sanjaynathwani-blip</a>, proudly developed entirely on a Googlebook.
-Not affiliated with or endorsed by any employer, or by Winamp, Spotify or Google (<a href="#about-this-project">more</a>).</sub></p>
+Not affiliated with or endorsed by any employer, or by Winamp, Spotify, YouTube or Google (<a href="#about-this-project">more</a>).</sub></p>
 
 <p align="center">
-  <img src="docs/images/hero.png" width="880" alt="Perfect Sound playing Neon Freeway by The Seven Segments: the seven-segment clock at 0:59, a synthwave sunset cover, green frequency bands and a six-track playlist">
+  <img src="docs/images/hero.png" width="880" alt="Perfect Sound playing Neon Freeway by The Seven Segments: the seven-segment clock at 1:33, a synthwave sunset cover, green frequency bands and a six-track playlist">
 </p>
 
 ## What it is
@@ -61,11 +62,11 @@ Googlebook's display scaling and at any window size.
 under each button show where you are, and Perfect Sound remembers both. For your own files the
 visualizer needs no permissions at all.
 
-## Remote mode: Spotify and Chrome
+## Remote mode: Spotify, YouTube Music and Chrome
 
 <p align="center">
   <img src="docs/images/remote.png" width="880" alt="Perfect Sound following a Chrome tab playing Harbour Lights by Mira Vale: a moonlit-sea cover and a rainbow LED visualizer">
-  <br><sub>Following a Chrome tab: the title, artist, album art and position come from Chrome's media session.</sub>
+  <br><sub>Following a Chrome tab: the title, artist, album art and position come from Chrome's media session. SPOTIFY and YT MUSIC work the same way for their web players.</sub>
 </p>
 
 Pick **SPOTIFY** or **YT MUSIC** next to the transport buttons and Perfect Sound opens that web
@@ -82,8 +83,9 @@ from a download, Android may grey that switch out as a **restricted setting**. I
 the switch and **OK**, then click **APP INFO** in Perfect Sound, open **⋮** at the top right and
 choose **Allow restricted settings**. After that, **GRANT ACCESS** turns on as usual.
 
-To make the visualizer bounce to them, press **ON**: Android asks to share an app's audio each
-time, and Perfect Sound only ever captures other apps' media playback, never the microphone.
+To make the visualizer bounce to them, press **ON** and pick **Chrome** when Android asks which
+app's audio to share. It asks each time, and Perfect Sound only ever captures other apps' media
+playback, never the microphone.
 
 ## Made for the Googlebook
 
@@ -154,7 +156,8 @@ Ideas and bug reports are welcome in [Issues](../../issues).
 Perfect Sound is plain Android: Kotlin, Jetpack Compose for every pixel of the interface (the
 seven-segment digits, the sliders and the meters are all drawn in code), and AndroidX Media3 for
 playback and the media session. Remote mode uses Android's media sessions and notification-listener
-API; the remote visualizer uses `AudioPlaybackCapture`. The app lives in [`app/`](app/).
+API (Chrome's media notification names the site that's playing, which tells Spotify and YouTube
+Music apart from other tabs); the remote visualizer uses `AudioPlaybackCapture`. The app lives in [`app/`](app/).
 
 ```sh
 ./gradlew assembleDebug          # app/build/outputs/apk/debug/app-debug.apk ("Perfect Sound Dev")
@@ -162,7 +165,7 @@ API; the remote visualizer uses `AudioPlaybackCapture`. The app lives in [`app/`
 ./gradlew assembleRelease        # signed only if ~/.config/perfect-sound/keystore.properties exists
 ```
 
-It needs JDK 17 and the Android SDK (platform 35). The debug build installs next to the release
+It needs JDK 17 and the Android SDK (platform 36). The debug build installs next to the release
 one, as **Perfect Sound Dev**. A [GitHub Actions workflow](.github/workflows/build.yml) builds it
 and runs the unit tests on every push and pull request.
 
@@ -188,8 +191,8 @@ affiliation with my employer: my employer didn't make, sponsor, review or endors
 here speaks for my employer or endorses its products.
 
 It's inspired by the desktop music players of the late '90s but shares no code or artwork with
-any of them. Winamp is a trademark of its owners, Spotify is a trademark of Spotify AB, and Chrome
-and Googlebook are trademarks of Google LLC; they're named only to describe what Perfect Sound
+any of them. Winamp is a trademark of its owners, Spotify is a trademark of Spotify AB, and Chrome,
+YouTube Music and Googlebook are trademarks of Google LLC; they're named only to describe what Perfect Sound
 works with, and none of them made or endorsed it.
 
 ## Licenses

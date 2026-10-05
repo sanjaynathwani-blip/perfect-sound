@@ -34,7 +34,7 @@ GREEN, WHITE = (88, 230, 104), (232, 234, 238)
 
 SCREENSHOTS = [
     ("hero.png", "Your own music, with a live visualizer and a proper playlist"),
-    ("remote.png", "Follows and controls Spotify or a Chrome tab"),
+    ("remote.png", "Follows Spotify, YouTube Music and any Chrome tab"),
     (None, "Six visualizer modes, four colour themes"),  # None: the grid of modes
 ]
 

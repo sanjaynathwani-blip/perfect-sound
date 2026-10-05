@@ -48,11 +48,13 @@ previous version.
    and install it.
 3. Open Perfect Sound, then **OPEN FILES** or **ADD FOLDER**: a local track plays and the
    visualizer moves.
-4. Pick **SPOTIFY** with something playing in Spotify. Turn on notification access with the app's
-   own **GRANT ACCESS** button. If the switch is greyed out, follow the steps the app shows.
+4. Pick **SPOTIFY** with something playing in Spotify's web player (open.spotify.com in Chrome).
+   Turn on notification access with the app's own **GRANT ACCESS** button. If the switch is
+   greyed out, follow the steps the app shows.
 5. Come back to Perfect Sound's window without closing it: Spotify's track and art appear.
-6. Press **ON** and accept Android's prompt: the visualizer moves to Spotify.
-7. Repeat 4 to 6 for **CHROME** with YouTube Music playing in a tab.
+6. Press **ON** and pick **Chrome** in Android's prompt: the visualizer moves to Spotify.
+7. Repeat 4 to 6 for **YT MUSIC** with YouTube Music playing in a tab, and for **CHROME** with
+   any other tab playing (YouTube, say).
 
 ## 5. Make it the latest release
 

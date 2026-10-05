@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.3 (2026-10-05)
 
 - **SPOTIFY now means Spotify's web player in Chrome.** The Spotify app has started marking its
   audio as off limits to other apps, so the visualizer stayed flat; the web player's audio comes
@@ -8,7 +8,6 @@
   tab back to the front. Spotify shows 256 kbps / 44 kHz, the web player's Premium quality.
 - **A YT MUSIC source** for YouTube Music on the web, which works the same way; CHROME covers every
   other tab. With four sources, the buttons show just their icons below 680 dp instead of 560 dp.
-
 - **Targets Android 16 (API 36),** which Google Play requires of new apps, ready for testing
   through Play.
 

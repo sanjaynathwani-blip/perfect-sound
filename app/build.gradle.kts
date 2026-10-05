@@ -14,8 +14,8 @@ android {
         applicationId = "app.perfectsound.player"
         minSdk = 29 // audio playback capture needs Android 10
         targetSdk = 36
-        versionCode = 8
-        versionName = "0.4.2"
+        versionCode = 9
+        versionName = "0.4.3"
     }
 
     // The release key lives outside the repo; without it, release builds are left unsigned.

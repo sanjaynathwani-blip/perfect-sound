@@ -65,8 +65,8 @@ Upload `app/build/outputs/bundle/release/app-release.aab`. Play takes the bundle
 > • Four colour themes
 >
 > REMOTE MODE
-> • See and control what Spotify or a Chrome tab is playing, with the visualizer bouncing to
->   it too
+> • See and control what's playing in Chrome, including the Spotify and YouTube Music web
+>   players, with the visualizer bouncing to it too
 >
 > A REAL PLAYLIST
 > • Add files or whole folders, drop files onto the window, or use Open with from Files
@@ -78,8 +78,8 @@ Upload `app/build/outputs/bundle/release/app-release.aab`. Play takes the bundle
 > the files you give it.
 >
 > Perfect Sound is a personal project, MIT-licensed, with its source on GitHub. It isn't
-> affiliated with or endorsed by Spotify or Google; they're named only to describe what it works
-> with.
+> affiliated with or endorsed by Spotify, YouTube or Google; they're named only to describe what
+> it works with.
 
 **Graphics** (from `tools/play_images.py`, in `build/play`)
 
