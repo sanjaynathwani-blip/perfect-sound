@@ -30,7 +30,7 @@ Every permission is optional and asked for only when you use the feature that ne
 | --- | --- |
 | Files you pick or drop | Playing the files and folders you choose. Perfect Sound sees nothing else of your storage. |
 | Notifications | The media controls while music plays in the background. |
-| Notification access | Android's way of letting an app see and control Chrome's media sessions (title, artist, art, play/pause). Perfect Sound also reads the site name in Chrome's media notification, to tell Spotify's web player from other tabs. It isn't used to read any other notifications. |
+| Notification access | Android's way of letting an app see and control Chrome's media sessions (title, artist, art, play/pause). Perfect Sound also reads the site name in Chrome's media notification, to tell the Spotify and YouTube Music web players from other tabs. It isn't used to read any other notifications. |
 | Record audio, and Android's share prompt | Hearing other apps' playback so the visualizer can move to it in remote mode. Only media playback is captured, never the microphone, and the sound is analysed on the device as it plays: nothing is recorded, kept or sent. |
 
 ## Children

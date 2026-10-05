@@ -30,28 +30,31 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Remote mode: follows Chrome's media session and forwards transport commands to it. The audio stays in
- * Chrome; we only show and control it. A tab playing from Spotify's web player counts as the Spotify
- * source and anything else as Chrome. The Spotify app itself isn't followed: it marks its audio as not
- * capturable by other apps, so the visualizer couldn't move to it.
+ * Chrome; we only show and control it. A tab playing from Spotify's or YouTube Music's web player counts
+ * as that source, and anything else as Chrome. The Spotify app itself isn't followed: it marks its audio
+ * as not capturable by other apps, so the visualizer couldn't move to it.
  */
 class RemoteSessions(private val context: Context) {
 
     /**
      * A source: the media session of [packageName], limited to tabs playing from [site] when it's set.
-     * Android doesn't reveal another app's stream format, so [typicalKbps] / [typicalSampleRateHz]
-     * are what the site usually streams: Spotify's web player for Premium (AAC 256 kbps, 44.1 kHz),
-     * and YouTube Music on the web (Opus, about 160 kbps at 48 kHz).
+     * [label] is for sentences and [button] for its source button. Android doesn't reveal another
+     * app's stream format, so [typicalKbps] / [typicalSampleRateHz] are what the site usually streams:
+     * Spotify's web player for Premium (AAC 256 kbps, 44.1 kHz), and YouTube on the web (Opus, about
+     * 160 kbps at 48 kHz).
      */
     enum class App(
         val packageName: String,
         val site: String?,
         val label: String,
+        val button: String,
         val typicalKbps: Int,
         val typicalSampleRateHz: Int,
     ) {
-        Spotify("com.android.chrome", "open.spotify.com", "Spotify", 256, 44_100),
-        /** Whatever else a Chrome tab is playing (YouTube Music on the web, YouTube, SoundCloud…). */
-        Chrome("com.android.chrome", null, "Chrome", 160, 48_000),
+        Spotify("com.android.chrome", "open.spotify.com", "Spotify", "SPOTIFY", 256, 44_100),
+        YouTubeMusic("com.android.chrome", "music.youtube.com", "YouTube Music", "YT MUSIC", 160, 48_000),
+        /** Whatever else a Chrome tab is playing (YouTube, SoundCloud…). */
+        Chrome("com.android.chrome", null, "Chrome", "CHROME", 160, 48_000),
     }
 
     data class NowPlaying(
@@ -296,11 +299,11 @@ class RemoteSessions(private val context: Context) {
         val tab = sessionFor[app]?.let { MediaListenerService.mediaNotification(it.sessionToken) }?.contentIntent
         if (tab != null && runCatching { tab.send(context, 0, null, null, null, null, allowActivityStart()) }.isSuccess) return
         // Otherwise open the site in Chrome itself, not in an app that claims its links (the Spotify app).
-        // Chrome keeps reusing one tab for the same application id, so this doesn't pile up tabs.
+        // Chrome keeps reusing one tab per application id, so each site gets its own and tabs don't pile up.
         runCatching {
             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://$site/"))
                 .setPackage(app.packageName)
-                .putExtra(Browser.EXTRA_APPLICATION_ID, context.packageName)
+                .putExtra(Browser.EXTRA_APPLICATION_ID, "${context.packageName}:$site")
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }
     }

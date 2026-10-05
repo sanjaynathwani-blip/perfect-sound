@@ -84,6 +84,18 @@ object Icons {
         }
     }
 
+    /** YouTube Music: a play triangle in a ring. */
+    val PlayRing: DrawScope.(Color) -> Unit = { c ->
+        val r = minOf(size.width, size.height) / 2
+        val cx = size.width / 2
+        val cy = size.height / 2
+        val line = Stroke(r * 0.16f)
+        drawCircle(c, r - line.width / 2, Offset(cx, cy), style = line)
+        drawPath(Path().apply {
+            moveTo(cx - r * 0.3f, cy - r * 0.42f); lineTo(cx + r * 0.46f, cy); lineTo(cx - r * 0.3f, cy + r * 0.42f); close()
+        }, c)
+    }
+
     /** A web browser: a globe. */
     val Globe: DrawScope.(Color) -> Unit = { c ->
         val r = minOf(size.width, size.height) / 2

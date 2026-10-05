@@ -118,7 +118,7 @@ class MainActivity : ComponentActivity() {
             }
             val sources = listOf(SourceOption(Source.Local, "LOCAL", true)) +
                 RemoteSessions.App.entries.map { app ->
-                    SourceOption(Source.Remote(app), app.label.uppercase(),
+                    SourceOption(Source.Remote(app), app.button,
                         available = app in remoteState.installed)
                 }
             val toggleCapture = { if (capturing) PlaybackCaptureService.stop(this) else startCapture() }
@@ -261,7 +261,7 @@ class MainActivity : ComponentActivity() {
                 info = NowPlayingInfo(),
                 message = PanelMessage(
                     "Nothing playing in ${app.label}",
-                    "Start something in ${app.label}, then control it from here. Click ${name} above to bring ${app.label} up.",
+                    "Start something in ${app.label}, then control it from here. Click ${app.button} above to bring ${app.label} up.",
                 ),
                 buttons = buttons,
                 eqOn = capturing,

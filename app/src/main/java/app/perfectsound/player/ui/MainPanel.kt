@@ -164,7 +164,7 @@ fun MainPanel(
             // Transport, and the source at the right end: just icons when the panel is narrow
             // (beside the playlist in a wide window).
             BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val compact = maxWidth < 560.dp
+                val compact = maxWidth < 680.dp
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                     IconButton(actions::previous, icon = Icons.Previous)
                     IconButton(actions::play, icon = Icons.Play)
@@ -192,6 +192,7 @@ private fun sourceIcon(source: Source) = when (source) {
     Source.Local -> Icons.Note
     is Source.Remote -> when (source.app) {
         RemoteSessions.App.Spotify -> Icons.Waves
+        RemoteSessions.App.YouTubeMusic -> Icons.PlayRing
         RemoteSessions.App.Chrome -> Icons.Globe
     }
 }

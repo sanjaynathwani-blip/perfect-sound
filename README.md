@@ -44,8 +44,8 @@ Googlebook's display scaling and at any window size.
 - **Your own music:** MP3, FLAC, AAC, Ogg, Opus, WAV and more, with gapless playback, a media
   notification, lock-screen and media-key controls, and it picks up where you left off.
 - **A visualizer** with six modes and four colour themes (below).
-- **Remote mode** for **Spotify's web player** and anything else in **Chrome**: see and control
-  what's playing, with the visualizer bouncing to it too.
+- **Remote mode** for the **Spotify** and **YouTube Music** web players and anything else in
+  **Chrome**: see and control what's playing, with the visualizer bouncing to it too.
 - **A real playlist:** add files or whole folders, drop files onto the window or use **Open with**
   from Files; select with Ctrl and Shift, drag to reorder, right-click for more.
 - **The classic keyboard shortcuts:** Z X C V B for the transport, and the rest below.
@@ -68,10 +68,10 @@ visualizer needs no permissions at all.
   <br><sub>Following a Chrome tab: the title, artist, album art and position come from Chrome's media session.</sub>
 </p>
 
-Pick **SPOTIFY** next to the transport buttons and Perfect Sound opens Spotify's web player in
-Chrome, or brings its tab back to the front; pick **CHROME** for anything else a tab plays, such
-as YouTube Music on the web. Start something, and Perfect Sound shows and controls it: play,
-pause, skip, seek and the volume. The audio stays in Chrome.
+Pick **SPOTIFY** or **YT MUSIC** next to the transport buttons and Perfect Sound opens that web
+player in Chrome, or brings its tab back to the front; pick **CHROME** for anything else a tab
+plays. Start something, and Perfect Sound shows and controls it: play, pause, skip, seek and the
+volume. The audio stays in Chrome.
 
 Why the web player rather than the Spotify app? The app marks its audio as off limits to other
 apps, so the visualizer couldn't move to it.
@@ -116,7 +116,7 @@ Perfect Sound isn't in a store; you install the APK from this page. It takes a m
 3. The first time, Android asks whether Chrome (or Files) may install apps: choose **Settings**,
    turn on **Allow from this source**, go back and click **Install**.
 4. Open **Perfect Sound** from the launcher and click **OPEN FILES** or **ADD FOLDER**, or pick
-   **SPOTIFY** or **CHROME**.
+   **SPOTIFY**, **YT MUSIC** or **CHROME**.
 
 **Updating:** download the new PerfectSound.apk and install it over the old one; your playlist and
 settings stay. Every release is signed with the same key, and Android refuses an update signed with
@@ -136,7 +136,7 @@ Googlebook's Linux Terminal, `sha256sum PerfectSound.apk` prints the one to comp
 | Permission | Why |
 | --- | --- |
 | Notifications | The media controls while music plays in the background |
-| Notification access | Android's way of letting an app see and control Chrome's media sessions. Perfect Sound also reads Chrome's media notification to see which site is playing (Spotify or another); it reads no other notifications |
+| Notification access | Android's way of letting an app see and control Chrome's media sessions. Perfect Sound also reads Chrome's media notification to see which site is playing (Spotify, YouTube Music or another); it reads no other notifications |
 | Record audio, and the share prompt | Android's way of letting an app hear other apps' playback for the visualizer in remote mode. Only media playback is captured, never the microphone, and nothing is recorded or kept |
 
 Uninstalling Perfect Sound removes everything it stored.
