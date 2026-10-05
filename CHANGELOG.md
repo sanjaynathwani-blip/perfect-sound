@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **SPOTIFY now means Spotify's web player in Chrome.** The Spotify app has started marking its
+  audio as off limits to other apps, so the visualizer stayed flat; the web player's audio comes
+  through Chrome, which allows it. Picking SPOTIFY opens open.spotify.com in Chrome, or brings its
+  tab back to the front, and CHROME covers every other tab. Spotify shows 256 kbps / 44 kHz, the
+  web player's Premium quality.
+
 - **Targets Android 16 (API 36),** which Google Play requires of new apps, ready for testing
   through Play.
 
